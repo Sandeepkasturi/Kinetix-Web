@@ -43,14 +43,19 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Create Icon File
+      - name: Download Icon
+        env:
+          ICON_PATH: ${{ github.event.client_payload.iconRepoPath }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # If icon data is provided in payload, decode it. Otherwise use default.
-          if [ "${{ github.event.client_payload.iconBase64 }}" != "" ]; then
-             echo "${{ github.event.client_payload.iconBase64 }}" | base64 -d > icon.png
+          if [ "$ICON_PATH" != "" ]; then
+             echo "Downloading icon from: $ICON_PATH"
+             # Use gh cli or curl to fetch content. Since it is in the repo, we can fetch raw if public, 
+             # or use API if private. 
+             # Safest: Use API to get download_url then curl it.
+             gh api repos/${{ github.repository }}/contents/$ICON_PATH --jq .download_url | xargs curl -L -o icon.png
           else
-             # Fallback or error handling
-             echo "No icon provided, using default not implemented yet."
+             echo "Error: No icon path provided."
              exit 1
           fi
 

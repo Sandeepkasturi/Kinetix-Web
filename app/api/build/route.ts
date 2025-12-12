@@ -37,11 +37,31 @@ export async function POST(req: NextRequest) {
                 }, { status: 500 });
             }
 
-            // Convert icon to Base64
-            const arrayBuffer = await iconFile.arrayBuffer();
-            const base64Icon = Buffer.from(arrayBuffer).toString('base64');
+            // 1. Upload Icon to GitHub Repo (to bypass payload limits)
+            const iconBuffer = Buffer.from(await iconFile.arrayBuffer());
+            const iconBase64Content = iconBuffer.toString('base64');
+            const iconPath = `temp_icons/${buildId}.png`;
 
-            // Dispatch Event
+            // We must use PUT to create the file
+            const uploadRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${iconPath}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `upload icon for build ${buildId}`,
+                    content: iconBase64Content
+                })
+            });
+
+            if (!uploadRes.ok) {
+                const errText = await uploadRes.text();
+                throw new Error(`Failed to upload icon to GitHub: ${errText}`);
+            }
+
+            // 2. Dispatch Event with Path reference (Payload is now tiny)
             const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/dispatches`, {
                 method: 'POST',
                 headers: {
@@ -55,7 +75,7 @@ export async function POST(req: NextRequest) {
                         appName,
                         appUrl,
                         buildId,
-                        iconBase64: base64Icon
+                        iconRepoPath: iconPath // Passing path instead of data
                     }
                 })
             });
