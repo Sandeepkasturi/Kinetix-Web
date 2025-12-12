@@ -1,0 +1,71 @@
+name: Build Android APK
+
+on:
+  repository_dispatch:
+    types: [build-apk]
+  workflow_dispatch:
+    inputs:
+      appName:
+        description: 'Application Name'
+        required: true
+      appUrl:
+        description: 'Website URL'
+        required: true
+      buildId:
+        description: 'Unique Build ID'
+        required: true
+      # Icon will be handled via default or separate step if possible, passing base64 in dispatch is risky for large files.
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Create Icon File
+        run: |
+          # If icon data is provided in payload, decode it. Otherwise use default.
+          if [ "${{ github.event.client_payload.iconBase64 }}" != "" ]; then
+             echo "${{ github.event.client_payload.iconBase64 }}" | base64 -d > icon.png
+          else
+             # Fallback or error handling
+             echo "No icon provided, using default not implemented yet."
+             exit 1
+          fi
+
+      - name: Build TWA Project
+        env:
+          APP_NAME: ${{ github.event.client_payload.appName || inputs.appName }}
+          APP_URL: ${{ github.event.client_payload.appUrl || inputs.appUrl }}
+          BUILD_ID: ${{ github.event.client_payload.buildId || inputs.buildId }}
+        run: |
+          # We need a script that takes env vars and runs BuildEngine.
+          # I will create 'scripts/build-action.js' for this.
+          npx tsx scripts/build-action.ts
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-${{ github.event.client_payload.buildId || inputs.buildId }}
+          path: android_project/app/build/outputs/apk/release/app-release-signed.apk

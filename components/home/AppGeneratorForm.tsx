@@ -8,9 +8,10 @@ export function AppGeneratorForm() {
     const [appName, setAppName] = useState('');
     const [appUrl, setAppUrl] = useState('');
     const [icon, setIcon] = useState<File | null>(null);
-    const [status, setStatus] = useState<'idle' | 'building' | 'success' | 'error'>('idle');
+    const [status, setStatus] = useState<'idle' | 'building' | 'success' | 'error' | 'active-cloud'>('idle');
     const [log, setLog] = useState<string>('');
     const [downloadUrl, setDownloadUrl] = useState('');
+    const [githubUrl, setGithubUrl] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -33,11 +34,15 @@ export function AppGeneratorForm() {
             const data = await response.json();
 
             if (data.success) {
-                setStatus('success');
-                setDownloadUrl(data.downloadUrl);
-                // Hack: We are storing these in the log string for the regex above to find, 
-                // OR we should verify state. Let's just append to log for now as the simple solution.
-                setLog(prev => prev + `Build Complete!\npackageId: ${data.packageId}\nSHA256: ${data.sha256Fingerprint}\n`);
+                if (data.mode === 'cloud') {
+                    setStatus('active-cloud');
+                    setGithubUrl(data.githubUrl);
+                    setLog(prev => prev + `Request sent to GitHub Actions!\nBuild ID: ${data.buildId}\n`);
+                } else {
+                    setStatus('success');
+                    setDownloadUrl(data.downloadUrl);
+                    setLog(prev => prev + `Build Complete!\npackageId: ${data.packageId}\nSHA256: ${data.sha256Fingerprint}\n`);
+                }
             } else {
                 setStatus('error');
                 setLog(prev => prev + `Error: ${data.error}\n`);
@@ -53,6 +58,48 @@ export function AppGeneratorForm() {
             {/* Left Side: Form */}
             <div className="order-2 lg:order-1">
                 <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl shadow-indigo-500/10">
+                    {status === 'active-cloud' && (
+                        <div className="text-center py-10">
+                            <div className="w-20 h-20 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <Globe className="w-10 h-10" />
+                            </div>
+                            <h2 className="text-2xl font-bold mb-2">Build Started on GitHub!</h2>
+                            <p className="text-slate-400 mb-8 px-4">
+                                Since you are on Vercel Free Tier, the build is running on GitHub Actions.
+                            </p>
+
+                            <a
+                                href={githubUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-8 rounded-xl transition-all w-full shadow-lg shadow-blue-900/20 mb-8"
+                            >
+                                <ArrowRight className="w-5 h-5" />
+                                Track Build Progress
+                            </a>
+
+                            <div className="text-left bg-slate-950 p-6 rounded-xl border border-slate-800">
+                                <p className="text-sm text-slate-300 mb-2">
+                                    <strong>Next Steps:</strong>
+                                </p>
+                                <ol className="list-decimal list-inside text-xs text-slate-400 space-y-2">
+                                    <li>Click button above to open GitHub.</li>
+                                    <li>Wait for the <strong>Build APK</strong> workflow to finish (approx 3-5 mins).</li>
+                                    <li>Click on the run to find the <strong>Artifacts</strong> section at the bottom.</li>
+                                    <li>Download your <strong>app-release-signed.apk</strong>.</li>
+                                    <li>Copy the Asset Links SHA-256 fingerprint from the logs.</li>
+                                </ol>
+                            </div>
+
+                            <button
+                                onClick={() => setStatus('idle')}
+                                className="mt-6 text-slate-500 hover:text-slate-300 text-sm font-medium"
+                            >
+                                Build Another App
+                            </button>
+                        </div>
+                    )}
+
                     {status === 'success' && (
                         <div className="text-center py-10">
                             <div className="w-20 h-20 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -103,7 +150,7 @@ export function AppGeneratorForm() {
                         </div>
                     )}
 
-                    {status !== 'success' && (
+                    {status !== 'success' && status !== 'active-cloud' && (
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">

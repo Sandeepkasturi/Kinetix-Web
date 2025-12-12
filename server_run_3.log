@@ -101,3 +101,9 @@ Generating 2,048 bit RSA key pair and self-signed certificate (SHA384withRSA) wi
  Γ£ô Compiled in 343ms
  Γ£ô Compiled in 329ms
  GET /about 200 in 147ms (compile: 12ms, render: 135ms)
+ GET / 200 in 1017ms (compile: 759ms, render: 257ms)
+ Γ£ô Compiled in 270ms
+ GET / 200 in 631ms (compile: 336ms, render: 296ms)
+ GET / 200 in 70ms (compile: 11ms, render: 60ms)
+ GET /pricing 200 in 130ms (compile: 35ms, render: 95ms)
+ GET / 200 in 87ms (compile: 9ms, render: 79ms)

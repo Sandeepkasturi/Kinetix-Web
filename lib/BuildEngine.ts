@@ -30,6 +30,15 @@ export class BuildEngine {
     }
 
     async run() {
+        // Vercel Serverless Protection
+        if (process.env.VERCEL) {
+            throw new Error(
+                "HOSTING ERROR: You are running on Vercel Serverless.\n" +
+                "The Android Build Engine requires Java & Android SDK, which are not available here.\n\n" +
+                "SOLUTION: You must host this app on a Docker container (Railway/Fly.io) OR implement the GitHub Actions adapter."
+            );
+        }
+
         try {
             await this.setupEnvironment();
             await this.generateProject();
