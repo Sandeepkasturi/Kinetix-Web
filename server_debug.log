@@ -1,0 +1,83 @@
+
+> native-bridge@0.1.0 dev
+> next dev
+
+ ΓÜá Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\Sandeep Kasturi\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\package-lock.json
+   * C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\package-lock.json
+
+   Γû▓ Next.js 16.0.10 (Turbopack)
+   - Local:         http://localhost:3000
+   - Network:       http://192.168.200.230:3000
+
+ Γ£ô Starting...
+ Γ£ô Ready in 9.4s
+ Γùï Compiling /api/build ...
+C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\182b0_8c695598._.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\182b0_@bubblewrap_core_dist_lib_2ce61982._.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[root-of-the-server]__ac1e324a._.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\182b0_next_0936f244._.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\node_modules\next\dist\server\require-hook.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\node_modules\next\dist\server\require.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\node_modules\next\dist\server\load-components.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\node_modules\next\dist\server\next-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\node_modules\next\dist\server\lib\trace\tracer.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+ Γ¿» Error: could not resolve "@resvg/resvg-js-win32-x64-msvc" into a module
+    at <unknown> (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\182b0_8c695598._.js:41029:31)
+    at module evaluation (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\182b0_8c695598._.js:41030:23)
+    at instantiateModule (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:715:9)
+    at getOrInstantiateModuleFromParent (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:738:12)
+    at Context.commonJsRequire [as r] (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:249:12)
+    at module evaluation (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\182b0_8c695598._.js:41286:93)
+    at instantiateModule (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:715:9)
+    at getOrInstantiateModuleFromParent (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:738:12)
+    at Context.commonJsRequire [as r] (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:249:12)
+    at module evaluation (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\182b0_@bubblewrap_core_dist_lib_2ce61982._.js:1886:42)
+    at instantiateModule (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:715:9)
+    at getOrInstantiateModuleFromParent (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:738:12)
+    at Context.commonJsRequire [as r] (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:249:12)
+    at module evaluation (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\182b0_@bubblewrap_core_dist_lib_2ce61982._.js:1933:41)
+    at instantiateModule (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:715:9)
+    at getOrInstantiateModuleFromParent (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:738:12)
+    at Context.commonJsRequire [as r] (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:249:12)
+    at module evaluation (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\182b0_@bubblewrap_core_dist_lib_2ce61982._.js:2662:45)
+    at instantiateModule (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:715:9)
+    at getOrInstantiateModuleFromParent (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:738:12)
+    at Context.esmImport [as i] (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:228:20)
+    at module evaluation (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[root-of-the-server]__ac1e324a._.js:200:271)
+    at instantiateModule (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:715:9)
+    at getOrInstantiateModuleFromParent (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:738:12)
+    at Context.esmImport [as i] (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:228:20)
+    at module evaluation (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[root-of-the-server]__ac1e324a._.js:373:222)
+    at instantiateModule (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:715:9)
+    at getOrInstantiateModuleFromParent (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:738:12)
+    at Context.esmImport [as i] (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:228:20)
+    at module evaluation (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\182b0_next_0936f244._.js:14138:232)
+    at instantiateModule (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:715:9)
+    at instantiateRuntimeModule (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:743:12)
+    at getOrInstantiateRuntimeModule (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:756:12)
+    at Object.m (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\chunks\[turbopack]_runtime.js:765:18)
+    at Object.<anonymous> (C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\.next\dev\server\app\api\build\route.js:16:3) {
+  page: '/api/build'
+}
+ Γùï Compiling /_error ...
+ POST /api/build 500 in 11.7s (compile: 11.0s, render: 610ms)
+ ΓÜá Found a change in next.config.ts. Restarting the server to apply the changes...
+ ΓÜá Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\Sandeep Kasturi\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\native-bridge\package-lock.json
+   * C:\Users\Sandeep Kasturi\.gemini\antigravity\scratch\web_to_app_poc\package-lock.json
+
+   Γû▓ Next.js 16.0.10 (Turbopack)
+   - Local:         http://localhost:3000
+   - Network:       http://192.168.200.230:3000
+
+ Γ£ô Starting...
