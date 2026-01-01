@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Loader2, Download, Smartphone, Globe, Upload, ArrowRight, Share2, Mail, QrCode } from 'lucide-react';
 import { MobileEmulator } from '@/components/ui/MobileEmulator';
 import { GenerateButton } from '@/components/ui/GenerateButton';
-import { BuildAnimation } from '@/components/ui/BuildAnimation'; // Keeping for safety or just clean up? User might want to revert.
-import { StickManAnimation } from '@/components/ui/StickManAnimation'; // Keeping import for now or removing? Let's keep distinct imports but swap usage.
+import { BuildAnimation } from '@/components/ui/BuildAnimation';
+import { StickManAnimation } from '@/components/ui/StickManAnimation';
 import { BuildVideo } from '@/components/ui/BuildVideo';
 import { QRCodeCanvas } from 'qrcode.react';
 
@@ -17,6 +17,38 @@ export function AppGeneratorForm() {
     const [log, setLog] = useState<string>('');
     const [downloadUrl, setDownloadUrl] = useState('');
     const [githubUrl, setGithubUrl] = useState('');
+    const [buildId, setBuildId] = useState('');
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+
+        if (status === 'active-cloud' && buildId) {
+            let elapsed = 0;
+            interval = setInterval(async () => {
+                elapsed += 5;
+                setLog(prev => {
+                    const clean = prev.split('\n').filter(l => !l.startsWith('Waiting for GitHub')).join('\n');
+                    return clean + `\nWaiting for GitHub Actions... (${elapsed}s elapsed)`;
+                });
+
+                try {
+                    const res = await fetch(`/api/status?buildId=${buildId}`);
+                    const data = await res.json();
+
+                    if (data.status === 'completed' && data.artifactId) {
+                        clearInterval(interval);
+                        setStatus('success');
+                        setDownloadUrl(`/api/artifact?artifactId=${data.artifactId}`);
+                        setLog(prev => prev + '\n\nBuild Complete! APK is ready.');
+                    }
+                } catch (err) {
+                    console.error('Polling error', err);
+                }
+            }, 5000);
+        }
+
+        return () => clearInterval(interval);
+    }, [status, buildId]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -41,6 +73,7 @@ export function AppGeneratorForm() {
             if (data.success) {
                 if (data.mode === 'cloud') {
                     setStatus('active-cloud');
+                    setBuildId(data.buildId);
                     setGithubUrl(data.githubUrl);
                     setLog(prev => prev + `Request sent to GitHub Actions!\nBuild ID: ${data.buildId}\n`);
                 } else {
@@ -65,7 +98,13 @@ export function AppGeneratorForm() {
                 <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-2xl shadow-purple-500/10">
                     {status === 'active-cloud' && (
                         <div className="text-center py-10">
-                            {/* ... kept same ... */}
+                            {/* We want to show logs here too, or just keep the form layout but hidden?  */}
+                            {/* Actually, let's keep the standard structure and show logs below. */}
+                            <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+                                <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">Building in Cloud</h3>
+                            <p className="text-slate-400">GitHub Actions is processing your request...</p>
                         </div>
                     )}
 
@@ -79,7 +118,6 @@ export function AppGeneratorForm() {
                             <p className="text-slate-400 mb-8">Your native Android application is ready.</p>
 
                             <div className="grid gap-4 max-w-sm mx-auto">
-                                {/* Primary Download Button */}
                                 <a
                                     href={downloadUrl}
                                     download
@@ -89,7 +127,6 @@ export function AppGeneratorForm() {
                                     Download APK
                                 </a>
 
-                                {/* Share Options */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <a
                                         href={`mailto:?subject=Check out my new app: ${appName}&body=Hey, I just created a native Android app for ${appName} using Kinetix! You can download it here: ${downloadUrl}`}
@@ -108,7 +145,6 @@ export function AppGeneratorForm() {
                                 </div>
                             </div>
 
-                            {/* QR Code Section */}
                             <div className="mt-8 pt-8 border-t border-slate-800">
                                 <p className="text-sm font-medium text-slate-400 mb-4 flex items-center justify-center gap-2">
                                     <QrCode className="w-4 h-4" />
@@ -121,7 +157,7 @@ export function AppGeneratorForm() {
                                         level={"H"}
                                         includeMargin={false}
                                         imageSettings={{
-                                            src: "/icon-192.png", // Fallback/Placeholder if we don't have the user icon easily accessible as URL yet, or just omit image settings
+                                            src: "/icon-192.png",
                                             x: undefined,
                                             y: undefined,
                                             height: 24,
