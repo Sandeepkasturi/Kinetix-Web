@@ -1,0 +1,7 @@
+node_modules
+.next
+.git
+android_project/app/build
+android_project/.gradle
+local.properties
+.env

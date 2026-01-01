@@ -1,54 +1,45 @@
-# Base image with OpenJDK 17
-FROM openjdk:17-slim
+# Use a base image with Java 17 (required for Android Gradle Plugin 8.0+)
+FROM eclipse-temurin:17-jdk-jammy
 
-# Environment Variables
-ENV ANDROID_SDK_ROOT="/opt/android-sdk"
-ENV PATH="${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${ANDROID_SDK_ROOT}/platform-tools"
-ENV API_LEVEL=34
-ENV BUILD_TOOLS_VERSION="34.0.0"
+# Set environment variables
+ENV ANDROID_SDK_ROOT /opt/android-sdk
+ENV PATH ${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${ANDROID_SDK_ROOT}/platform-tools
 
-# Install Dependencies
+# Install necessary system tools
+# Install Node.js 20 (LTS) - Needed for our build scripts
 RUN apt-get update && apt-get install -y \
-    wget \
+    curl \
     unzip \
     git \
-    nodejs \
-    npm \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# Setup Android SDK Directory
-RUN mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools
-
-# Download Android SDK Command Line Tools
-# Check https://developer.android.com/studio#command-tools for latest version
-RUN wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip \
-    && unzip cmdline-tools.zip -d ${ANDROID_SDK_ROOT}/cmdline-tools \
+# Setup Android SDK
+WORKDIR /opt
+RUN mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools \
+    && curl -o sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip \
+    && unzip sdk-tools.zip -d ${ANDROID_SDK_ROOT}/cmdline-tools \
     && mv ${ANDROID_SDK_ROOT}/cmdline-tools/cmdline-tools ${ANDROID_SDK_ROOT}/cmdline-tools/latest \
-    && rm cmdline-tools.zip
+    && rm sdk-tools.zip
 
-# Accept Licenses
-RUN yes | sdkmanager --licenses
+# Accept licenses and install platform tools
+RUN yes | sdkmanager --licenses \
+    && sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-# Install SDK Packages
-RUN sdkmanager "platform-tools" \
-    "platforms;android-${API_LEVEL}" \
-    "build-tools;${BUILD_TOOLS_VERSION}" \
-    "extras;google;m2repository" \
-    "extras;android;m2repository"
-
-# Working Directory for App
+# Set working directory for the app
 WORKDIR /app
 
-# Copy Application Codes
+# Copy package files first for caching
 COPY package*.json ./
+COPY tsconfig.json ./
+
+# Install dependencies (including the 'tsx' and 'fs-extra' needed for build scripts)
 RUN npm install
+
+# Copy the rest of the application code
 COPY . .
 
-# Build Next.js App (Or just run the worker script directly)
-RUN npm run build
-
-# Expose Port (if needed for API)
-EXPOSE 3000
-
-# Start command
-CMD ["npm", "start"]
+# We don't build immediately. We provide an entrypoint that can take env vars.
+# Usage: docker run -e APP_NAME="..." -e APP_URL="..." -e BUILD_ID="..." ...
+CMD ["npx", "tsx", "scripts/build-action.ts"]
