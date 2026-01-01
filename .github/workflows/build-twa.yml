@@ -75,15 +75,20 @@ jobs:
           APP_URL: ${{ github.event.client_payload.appUrl || inputs.appUrl }}
           BUILD_ID: ${{ github.event.client_payload.buildId || inputs.buildId }}
         run: |
-          # We need a script that takes env vars and runs BuildEngine.
-          # I will create 'scripts/build-action.js' for this.
           npx tsx scripts/build-action.ts
+
+      - name: Debug Output Directory
+        run: |
+          echo "Listing build outputs:"
+          ls -R android_project/app/build/outputs || echo "Directory not found"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-release-${{ github.event.client_payload.buildId || inputs.buildId }}
           path: android_project/app/build/outputs/apk/release/app-release-signed.apk
+          if-no-files-found: error
+
 
       - name: Upload Source Code
         if: always() # Upload even if build fails, so user can debug/fix locally
