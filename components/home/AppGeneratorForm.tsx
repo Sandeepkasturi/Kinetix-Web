@@ -100,8 +100,9 @@ export function AppGeneratorForm() {
                         <div className="text-center py-10">
                             {/* We want to show logs here too, or just keep the form layout but hidden?  */}
                             {/* Actually, let's keep the standard structure and show logs below. */}
-                            <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
-                                <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+                            {/* Video Animation during Cloud Build */}
+                            <div className="mb-8">
+                                <BuildVideo />
                             </div>
                             <h3 className="text-xl font-bold text-white mb-2">Building in Cloud</h3>
                             <p className="text-slate-400 mb-6">GitHub Actions is processing your request...</p>
