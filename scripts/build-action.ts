@@ -46,4 +46,7 @@ async function run() {
     }
 }
 
-run();
+run().then(() => {
+    console.log('Build script finished. Exiting...');
+    process.exit(0);
+});
