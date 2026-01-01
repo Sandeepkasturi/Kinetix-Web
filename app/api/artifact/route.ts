@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
         headers.set('Content-Disposition', `attachment; filename="${apkEntry.name}"`);
         headers.set('Content-Length', apkBuffer.length.toString());
 
-        return new NextResponse(apkBuffer, {
+        return new NextResponse(apkBuffer as unknown as BodyInit, {
             status: 200,
             headers,
         });
