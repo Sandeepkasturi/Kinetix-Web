@@ -50,7 +50,7 @@ export function MobileEmulator({ url }: MobileEmulatorProps) {
             <div className="flex-1 bg-white relative mt-[32px] rounded-b-[2rem] overflow-hidden">
                 {loading && (
                     <div className="absolute inset-0 z-10 bg-slate-100 flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
                     </div>
                 )}
 

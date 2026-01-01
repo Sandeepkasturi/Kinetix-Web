@@ -1,15 +1,16 @@
 import Link from 'next/link';
-import { Smartphone, Github, Linkedin } from 'lucide-react';
+import { Github, Linkedin } from 'lucide-react';
+import { Logo } from '@/components/ui/Logo';
 
 export function Navbar() {
     return (
         <nav className="fixed top-0 w-full z-50 border-b border-indigo-500/10 bg-slate-950/80 backdrop-blur-md supports-[backdrop-filter]:bg-slate-950/60">
             <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-2 group">
-                    <div className="p-2 bg-indigo-500/10 rounded-lg group-hover:bg-indigo-500/20 transition-colors">
-                        <Smartphone className="w-5 h-5 text-indigo-400" />
+                    <div className="p-1 bg-purple-500/5 rounded-lg group-hover:bg-purple-500/15 transition-colors">
+                        <Logo className="w-8 h-8" />
                     </div>
-                    <span className="font-bold text-lg tracking-tight text-slate-100">NativeBridge</span>
+                    <span className="font-bold text-lg tracking-tight text-slate-100">Kinetix</span>
                 </Link>
 
                 <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">

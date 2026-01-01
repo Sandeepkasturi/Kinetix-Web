@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Github, Linkedin, Heart } from 'lucide-react';
+import { Logo } from '@/components/ui/Logo';
 
 export function Footer() {
     return (
@@ -7,7 +8,10 @@ export function Footer() {
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
                     <div className="col-span-1 md:col-span-2">
-                        <h3 className="text-xl font-bold text-slate-100 mb-4">NativeBridge</h3>
+                        <div className="flex items-center gap-2 mb-4">
+                            <Logo className="w-8 h-8" />
+                            <h3 className="text-xl font-bold text-slate-100">Kinetix</h3>
+                        </div>
                         <p className="text-slate-400 max-w-sm mb-6 leading-relaxed">
                             Empowering small businesses and creators to own their mobile presence. Turn any website into a high-performance Android application in minutes.
                         </p>
