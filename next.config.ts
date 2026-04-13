@@ -1,7 +1,126 @@
 import type { NextConfig } from "next";
 
+const securityHeaders = [
+  // Strict Transport Security (HSTS)
+  {
+    key: 'Strict-Transport-Security',
+    value: 'max-age=63072000; includeSubDomains; preload',
+  },
+  // Prevent clickjacking
+  {
+    key: 'X-Frame-Options',
+    value: 'SAMEORIGIN',
+  },
+  // Prevent MIME sniffing
+  {
+    key: 'X-Content-Type-Options',
+    value: 'nosniff',
+  },
+  // Referrer Policy
+  {
+    key: 'Referrer-Policy',
+    value: 'strict-origin-when-cross-origin',
+  },
+  // Permissions policy — disable unused browser APIs
+  {
+    key: 'Permissions-Policy',
+    value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=()',
+  },
+  // DNS prefetch control
+  {
+    key: 'X-DNS-Prefetch-Control',
+    value: 'on',
+  },
+  // Content Security Policy
+  {
+    key: 'Content-Security-Policy',
+    value: [
+      "default-src 'self'",
+      // Allow scripts from self + Next.js inline scripts + Google Fonts
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com",
+      // Allow styles from self + Google Fonts + inline (Tailwind)
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com",
+      // Allow fonts from Google
+      "font-src 'self' https://fonts.gstatic.com data:",
+      // Allow images from self, data URIs, and any https (for user site previews)
+      "img-src 'self' data: blob: https:",
+      // Allow frames for the mobile emulator preview iframe
+      "frame-src 'self' https:",
+      // API connections — self for Next.js API + GitHub API
+      "connect-src 'self' https://api.github.com",
+      // Workers (Three.js canvas, etc.)
+      "worker-src 'self' blob:",
+      // Media (videos from BuildVideo component)
+      "media-src 'self' blob: data:",
+      // Object embeds — none
+      "object-src 'none'",
+      // Base URI restriction
+      "base-uri 'self'",
+      // Form action restriction
+      "form-action 'self'",
+      // Upgrade insecure requests
+      "upgrade-insecure-requests",
+    ].join('; '),
+  },
+];
+
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['@bubblewrap/core', 'jimp', 'sharp', '@resvg/resvg-js'],
+  // Turbopack Config
+  turbopack: {},
+
+  // Security headers on all routes
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: securityHeaders,
+      },
+      // CORS for the deep-link verification endpoint
+      {
+        source: '/api/assetlinks',
+        headers: [
+          { key: 'Content-Type', value: 'application/json' },
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Cache-Control', value: 'public, max-age=86400, s-maxage=86400' },
+        ],
+      },
+    ];
+  },
+
+  // Redirect canonical paths
+  async redirects() {
+    return [
+      {
+        source: '/home',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/policy',
+        destination: '/privacy',
+        permanent: true,
+      },
+    ];
+  },
+
+  // Webpack config for Three.js canvas peerDep
+  webpack(config) {
+    config.externals = config.externals || [];
+    return config;
+  },
+
+  // Image optimization
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
+
+  // Disable powered-by header
+  poweredByHeader: false,
+
+  // Compress responses
+  compress: true,
 };
 
 export default nextConfig;

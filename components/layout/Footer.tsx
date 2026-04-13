@@ -1,70 +1,137 @@
 import Link from 'next/link';
-import { Github, Linkedin, Heart } from 'lucide-react';
-import { Logo } from '@/components/ui/Logo';
+import { Github, Linkedin, Mail, ArrowUpRight } from 'lucide-react';
+import { KinetixLogo } from '@/components/ui/KinetixLogo';
+
+const nav = [
+  {
+    heading: 'Product',
+    links: [
+      { href: '/pricing', label: 'Pricing' },
+      { href: '/about', label: 'About' },
+      { href: '/developer', label: 'API Docs' },
+      { href: '/#generate', label: 'Build an app' },
+    ],
+  },
+  {
+    heading: 'Legal',
+    links: [
+      { href: '/privacy', label: 'Privacy Policy' },
+      { href: '/terms', label: 'Terms of Service' },
+    ],
+  },
+  {
+    heading: 'Connect',
+    links: [
+      { href: 'https://github.com/sandeepkasturi', label: 'GitHub', external: true },
+      { href: 'https://linkedin.com/in/sandeepkasturi9', label: 'LinkedIn', external: true },
+      { href: 'mailto:hello@kinetixapp.com', label: 'hello@kinetixapp.com', external: true },
+    ],
+  },
+] satisfies { heading: string; links: { href: string; label: string; external?: boolean }[] }[];
 
 export function Footer() {
-    return (
-        <footer className="border-t border-slate-800 bg-slate-950 pt-16 pb-8">
-            <div className="container mx-auto px-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-                    <div className="col-span-1 md:col-span-2">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Logo className="w-8 h-8" />
-                            <h3 className="text-xl font-bold text-slate-100">Kinetix</h3>
-                        </div>
-                        <p className="text-slate-400 max-w-sm mb-6 leading-relaxed">
-                            Empowering small businesses and creators to own their mobile presence. Turn any website into a high-performance Android application in minutes.
-                        </p>
-                        <div className="flex items-center gap-4">
-                            <a
-                                href="https://github.com/sandeepkasturi"
-                                target="_blank"
-                                rel="noreferrer"
-                                className="p-2 bg-slate-900 rounded-full hover:bg-indigo-500/20 hover:text-indigo-400 text-slate-400 transition-all"
-                            >
-                                <Github className="w-5 h-5" />
-                            </a>
-                            <a
-                                href="https://linkedin.in/sandeepkasturi9"
-                                target="_blank"
-                                rel="noreferrer"
-                                className="p-2 bg-slate-900 rounded-full hover:bg-indigo-500/20 hover:text-indigo-400 text-slate-400 transition-all"
-                            >
-                                <Linkedin className="w-5 h-5" />
-                            </a>
-                        </div>
-                    </div>
+  return (
+    <footer className="border-t border-white/[0.05] bg-[#020617]">
+      <div className="container mx-auto px-6 max-w-5xl">
 
-                    <div>
-                        <h4 className="font-bold text-slate-100 mb-6">Product</h4>
-                        <ul className="space-y-4 text-sm text-slate-400">
-                            <li><Link href="/pricing" className="hover:text-indigo-400 transition-colors">Pricing</Link></li>
-                            <li><Link href="/about" className="hover:text-indigo-400 transition-colors">About Us</Link></li>
-                            <li><Link href="/developer" className="hover:text-indigo-400 transition-colors">API</Link></li>
-                        </ul>
-                    </div>
+        {/* Main grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 py-16">
 
-                    <div>
-                        <h4 className="font-bold text-slate-100 mb-6">Legal</h4>
-                        <ul className="space-y-4 text-sm text-slate-400">
-                            <li><span className="cursor-not-allowed opacity-50">Privacy Policy</span></li>
-                            <li><span className="cursor-not-allowed opacity-50">Terms of Service</span></li>
-                        </ul>
-                    </div>
-                </div>
+          {/* Brand */}
+          <div className="col-span-2 md:col-span-1">
+            <KinetixLogo size={32} showText className="mb-4" />
+            <p className="text-sm text-[#475569] leading-relaxed max-w-[220px]">
+              Turn any website into a native mobile app. No code, no hassle.
+            </p>
 
-                <div className="pt-8 border-t border-slate-900 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-500">
-                    <div className="flex items-center gap-1">
-                        <span>A project by</span>
-                        <a href="https://skavtechs.vercel.app" target="_blank" className="font-bold text-indigo-400 hover:text-indigo-300 transition-colors">SKAV TECH</a>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <span>Developed with</span>
-                        <Heart className="w-3 h-3 text-red-500 fill-current" />
-                        <span>by Sandeep Kasturi</span>
-                    </div>
-                </div>
+            <div className="flex items-center gap-2 mt-6">
+              <a
+                href="https://github.com/sandeepkasturi"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="GitHub"
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-white/[0.07] text-[#475569] hover:text-white hover:border-white/[0.14] transition-all"
+              >
+                <Github className="w-3.5 h-3.5" />
+              </a>
+              <a
+                href="https://linkedin.com/in/sandeepkasturi9"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="LinkedIn"
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-white/[0.07] text-[#475569] hover:text-white hover:border-white/[0.14] transition-all"
+              >
+                <Linkedin className="w-3.5 h-3.5" />
+              </a>
+              <a
+                href="mailto:hello@kinetixapp.com"
+                aria-label="Email"
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-white/[0.07] text-[#475569] hover:text-white hover:border-white/[0.14] transition-all"
+              >
+                <Mail className="w-3.5 h-3.5" />
+              </a>
             </div>
-        </footer>
-    );
+          </div>
+
+          {/* Nav columns */}
+          {nav.map((col) => (
+            <div key={col.heading}>
+              <p className="text-[11px] font-semibold text-[#334155] uppercase tracking-widest mb-4">
+                {col.heading}
+              </p>
+              <ul className="space-y-2.5">
+                {col.links.map((link) => (
+                  <li key={link.href}>
+                    {link.external ? (
+                      <a
+                        href={link.href}
+                        target={link.href.startsWith('http') ? '_blank' : undefined}
+                        rel={link.href.startsWith('http') ? 'noreferrer' : undefined}
+                        className="inline-flex items-center gap-1 text-sm text-[#475569] hover:text-[#94a3b8] transition-colors"
+                      >
+                        {link.label}
+                        {link.href.startsWith('http') && (
+                          <ArrowUpRight className="w-3 h-3 opacity-50" />
+                        )}
+                      </a>
+                    ) : (
+                      <Link
+                        href={link.href}
+                        className="text-sm text-[#475569] hover:text-[#94a3b8] transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom bar */}
+        <div className="border-t border-white/[0.05] py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <p className="text-xs text-[#334155]">
+            © {new Date().getFullYear()} Kinetix. All rights reserved.
+          </p>
+          <div className="flex items-center gap-4">
+            <span className="inline-flex items-center gap-1.5 text-[11px] text-[#334155]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              All systems operational
+            </span>
+            <span className="text-[#1e293b]">·</span>
+            <a
+              href="https://skavtechs.vercel.app"
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs text-[#334155] hover:text-[#475569] transition-colors"
+            >
+              Built by SKAV TECH
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </footer>
+  );
 }

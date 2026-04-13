@@ -1,83 +1,144 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Logo } from '@/components/ui/Logo';
+import { KinetixLogo } from '@/components/ui/KinetixLogo';
 
 export function SplashScreen() {
-    // Start visible, then fade out
-    const [isVisible, setIsVisible] = useState(true);
-    const [shouldRender, setShouldRender] = useState(true);
+  const [isVisible, setIsVisible] = useState(true);
+  const [shouldRender, setShouldRender] = useState(true);
+  const [progress, setProgress] = useState(0);
 
-    useEffect(() => {
-        // Prevent scrolling while splash is active
-        document.body.style.overflow = 'hidden';
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
 
-        const timer1 = setTimeout(() => {
-            setIsVisible(false); // Start fade out
-            document.body.style.overflow = 'unset'; // Restore scrolling
-        }, 2500);
+    // Animate progress bar
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) { clearInterval(progressInterval); return 100; }
+        return prev + 4;
+      });
+    }, 80); // ~2s to reach 100%
 
-        const timer2 = setTimeout(() => {
-            setShouldRender(false); // Unmount
-        }, 3000); // 2.5s + 0.5s transition
+    const timer1 = setTimeout(() => {
+      setIsVisible(false);
+      document.body.style.overflow = 'unset';
+    }, 2200);
 
-        return () => {
-            clearTimeout(timer1);
-            clearTimeout(timer2);
-            document.body.style.overflow = 'unset';
-        };
-    }, []);
+    const timer2 = setTimeout(() => {
+      setShouldRender(false);
+    }, 2900);
 
-    if (!shouldRender) return null;
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearInterval(progressInterval);
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
 
-    return (
+  if (!shouldRender) return null;
+
+  return (
+    <div
+      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#020617] transition-opacity duration-700 ease-in-out ${
+        isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}
+      style={{
+        backgroundImage: `
+          radial-gradient(ellipse 80% 60% at 50% -10%, rgba(139,92,246,0.25) 0%, transparent 70%),
+          linear-gradient(to right, rgba(148,163,184,0.03) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(148,163,184,0.03) 1px, transparent 1px)
+        `,
+        backgroundSize: 'auto, 48px 48px, 48px 48px',
+      }}
+    >
+      <div className="relative flex flex-col items-center">
+        {/* Ambient glow behind logo */}
         <div
-            className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#020617] transition-opacity duration-700 ease-in-out ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                }`}
-        >
-            <div className="relative flex flex-col items-center">
-                {/* Logo with Glow */}
-                <div className="relative mb-6">
-                    <div className="absolute inset-0 bg-purple-500/20 blur-3xl rounded-full" />
-                    <Logo className="w-24 h-24 md:w-32 md:h-32 relative z-10" />
-                </div>
+          className="absolute"
+          style={{
+            width: '200px',
+            height: '200px',
+            background: 'radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%)',
+            filter: 'blur(30px)',
+            transform: 'translateY(-20px)',
+          }}
+        />
 
-                {/* Brand Name */}
-                <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight mb-3 animate-fade-in-up">
-                    Kinetix
-                </h1>
-
-                {/* Tagline */}
-                <p className="text-slate-400 text-sm md:text-lg tracking-wide uppercase font-medium animate-fade-in-up delay-100">
-                    Web to Native. <span className="text-purple-400">Instantly.</span>
-                </p>
-
-                {/* Loading Bar (Decorative) */}
-                <div className="w-32 h-1 bg-slate-800 rounded-full mt-8 overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-purple-500 to-cyan-500 w-1/2 animate-[shimmer_1s_infinite_linear]" />
-                </div>
-            </div>
-
-            <style jsx>{`
-                @keyframes shimmer {
-                    0% { transform: translateX(-100%); }
-                    100% { transform: translateX(200%); }
-                }
-                .animate-fade-in-up {
-                    animation: fadeInUp 0.8s ease-out forwards;
-                    opacity: 0;
-                    transform: translateY(10px);
-                }
-                .delay-100 {
-                    animation-delay: 0.1s;
-                }
-                @keyframes fadeInUp {
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-            `}</style>
+        {/* Logo */}
+        <div className="relative z-10 mb-6" style={{ animation: 'splashLogoIn 0.6s ease-out forwards' }}>
+          <KinetixLogo size={80} animated />
         </div>
-    );
+
+        {/* Brand Name */}
+        <h1
+          className="text-4xl md:text-5xl font-black text-white tracking-tight mb-2"
+          style={{ animation: 'splashTextIn 0.6s 0.15s ease-out both' }}
+        >
+          <span style={{
+            background: 'linear-gradient(135deg, #a78bfa, #8b5cf6, #22d3ee)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}>
+            Kinetix
+          </span>
+        </h1>
+
+        {/* Tagline */}
+        <p
+          className="text-sm tracking-widest uppercase font-medium"
+          style={{
+            color: '#475569',
+            animation: 'splashTextIn 0.6s 0.3s ease-out both',
+          }}
+        >
+          Web to Native.{' '}
+          <span style={{ color: '#8b5cf6' }}>Instantly.</span>
+        </p>
+
+        {/* Progress track */}
+        <div
+          className="mt-10 overflow-hidden rounded-full"
+          style={{
+            width: '120px',
+            height: '2px',
+            background: 'rgba(148,163,184,0.1)',
+            animation: 'splashTextIn 0.4s 0.4s ease-out both',
+          }}
+        >
+          <div
+            style={{
+              height: '100%',
+              width: `${progress}%`,
+              background: 'linear-gradient(90deg, #8b5cf6, #06b6d4)',
+              borderRadius: '99px',
+              transition: 'width 80ms linear',
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Copyright */}
+      <p
+        className="absolute bottom-8 text-xs"
+        style={{
+          color: '#1e293b',
+          animation: 'splashTextIn 0.4s 0.5s ease-out both',
+        }}
+      >
+        by SKAV TECH
+      </p>
+
+      <style>{`
+        @keyframes splashLogoIn {
+          from { opacity: 0; transform: scale(0.7) translateY(10px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes splashTextIn {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+    </div>
+  );
 }

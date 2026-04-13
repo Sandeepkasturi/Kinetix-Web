@@ -1,0 +1,220 @@
+version: 2.1
+
+# ─── Pipeline Parameters (sent from /api/build via CircleCI API) ─────────────
+parameters:
+  run-build:
+    type: boolean
+    default: false
+  app-name:
+    type: string
+    default: ""
+  app-url:
+    type: string
+    default: ""
+  build-id:
+    type: string
+    default: ""
+  platform:
+    type: string
+    default: "android"
+  enable-deep-links:
+    type: string
+    default: "true"
+  enable-notifications:
+    type: string
+    default: "false"
+  email:
+    type: string
+    default: ""
+  base-url:
+    type: string
+    default: "https://kinetixapp.com"
+  icon-url:
+    type: string
+    default: ""
+
+# ─── Reusable Commands ────────────────────────────────────────────────────────
+commands:
+  install-deps:
+    steps:
+      - restore_cache:
+          keys:
+            - node-deps-v1-{{ checksum "package-lock.json" }}
+      - run:
+          name: Install Node.js dependencies
+          command: npm ci --prefer-offline --no-audit
+      - save_cache:
+          key: node-deps-v1-{{ checksum "package-lock.json" }}
+          paths:
+            - node_modules
+
+  download-icon:
+    steps:
+      - run:
+          name: Download custom icon (if provided)
+          command: |
+            if [ -n "<< pipeline.parameters.icon-url >>" ]; then
+              curl -fsSL "<< pipeline.parameters.icon-url >>" -o icon.png \
+                && echo "✅ Custom icon downloaded" \
+                || echo "⚠️  Icon download failed — using default"
+            else
+              echo "ℹ️  No custom icon URL — using default"
+            fi
+
+# ─── Jobs ─────────────────────────────────────────────────────────────────────
+jobs:
+  # ══════════════════════════════════════════════════════════
+  # Android — ubuntu runner with Android SDK pre-installed
+  # ══════════════════════════════════════════════════════════
+  build-android:
+    docker:
+      - image: cimg/android:2024.01
+    resource_class: medium
+    environment:
+      APP_NAME:          << pipeline.parameters.app-name >>
+      APP_URL:           << pipeline.parameters.app-url >>
+      BUILD_ID:          << pipeline.parameters.build-id >>
+      BUILD_PLATFORM:    android
+      ENABLE_DEEP_LINKS: << pipeline.parameters.enable-deep-links >>
+      BUILD_EMAIL:       << pipeline.parameters.email >>
+      BASE_URL:          << pipeline.parameters.base-url >>
+
+    steps:
+      - checkout
+      - install-deps
+      - download-icon
+
+      - restore_cache:
+          keys:
+            - gradle-v2-{{ checksum "package-lock.json" }}
+
+      - run:
+          name: Run Kinetix Build Engine (Android)
+          command: |
+            npx tsx scripts/build-action.ts 2>&1 | tee build_output.log
+            echo "Exit code: $?"
+
+      - save_cache:
+          key: gradle-v2-{{ checksum "package-lock.json" }}
+          paths:
+            - ~/.gradle/caches
+            - ~/.gradle/wrapper
+
+      - store_artifacts:
+          path: android_project/app/build/outputs/apk/release/app-release-signed.apk
+          destination: app.apk
+
+      - store_artifacts:
+          path: build_output.log
+          destination: build_output.log
+
+      - run:
+          name: Notify — Success
+          when: on_success
+          command: |
+            SHA=$(grep -oP '(?<=SHA256 Fingerprint::)[\w:]+' build_output.log | head -1 || echo "")
+            ARTIFACT_URL="https://output.circle-artifacts.com/output/job/${CIRCLE_BUILD_NUM}/artifacts/0/app.apk"
+            curl -sX POST "${BASE_URL}/api/notify" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"buildId\":    \"${BUILD_ID}\",
+                \"status\":     \"success\",
+                \"artifactUrl\": \"${ARTIFACT_URL}\",
+                \"sha256\":     \"${SHA}\",
+                \"appName\":    \"${APP_NAME}\",
+                \"email\":      \"${BUILD_EMAIL}\",
+                \"platform\":   \"android\"
+              }"
+
+      - run:
+          name: Notify — Failure
+          when: on_fail
+          command: |
+            curl -sX POST "${BASE_URL}/api/notify" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"buildId\":  \"${BUILD_ID}\",
+                \"status\":   \"failed\",
+                \"appName\":  \"${APP_NAME}\",
+                \"email\":    \"${BUILD_EMAIL}\",
+                \"error\":    \"Android build failed on CircleCI. Check build logs for details.\"
+              }"
+
+  # ══════════════════════════════════════════════════════════
+  # iOS — macOS runner (M1) with Xcode pre-installed
+  # ══════════════════════════════════════════════════════════
+  build-ios:
+    macos:
+      xcode: "15.4.0"
+    resource_class: macos.m1.medium.gen1
+    environment:
+      APP_NAME:          << pipeline.parameters.app-name >>
+      APP_URL:           << pipeline.parameters.app-url >>
+      BUILD_ID:          << pipeline.parameters.build-id >>
+      BUILD_PLATFORM:    ios
+      ENABLE_DEEP_LINKS: << pipeline.parameters.enable-deep-links >>
+      BUILD_EMAIL:       << pipeline.parameters.email >>
+      BASE_URL:          << pipeline.parameters.base-url >>
+
+    steps:
+      - checkout
+      - install-deps
+      - download-icon
+
+      - run:
+          name: Run Kinetix Build Engine (iOS project generation)
+          command: npx tsx scripts/build-action.ts
+
+      - store_artifacts:
+          path: ios_project/
+          destination: ios-source
+
+      - run:
+          name: Notify — Success
+          when: on_success
+          command: |
+            ARTIFACT_URL="https://output.circle-artifacts.com/output/job/${CIRCLE_BUILD_NUM}/artifacts/0/ios-source"
+            curl -sX POST "${BASE_URL}/api/notify" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"buildId\":    \"${BUILD_ID}\",
+                \"status\":     \"success\",
+                \"artifactUrl\": \"${ARTIFACT_URL}\",
+                \"appName\":    \"${APP_NAME}\",
+                \"email\":      \"${BUILD_EMAIL}\",
+                \"platform\":   \"ios\"
+              }"
+
+      - run:
+          name: Notify — Failure
+          when: on_fail
+          command: |
+            curl -sX POST "${BASE_URL}/api/notify" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"buildId\":  \"${BUILD_ID}\",
+                \"status\":   \"failed\",
+                \"appName\":  \"${APP_NAME}\",
+                \"email\":    \"${BUILD_EMAIL}\",
+                \"error\":    \"iOS build failed on CircleCI. Check build logs for details.\"
+              }"
+
+# ─── Workflows ────────────────────────────────────────────────────────────────
+workflows:
+  # Android workflow — only runs when run-build=true AND platform=android
+  build-android-workflow:
+    when:
+      and:
+        - << pipeline.parameters.run-build >>
+        - equal: ["android", << pipeline.parameters.platform >>]
+    jobs:
+      - build-android
+
+  # iOS workflow — only runs when run-build=true AND platform=ios
+  build-ios-workflow:
+    when:
+      and:
+        - << pipeline.parameters.run-build >>
+        - equal: ["ios", << pipeline.parameters.platform >>]
+    jobs:
+      - build-ios
