@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
       }
 
       const emailPayload = {
+        type: 'build' as const,
         to: email,
         appName: appName || 'Your App',
         platform: platform || 'android',
