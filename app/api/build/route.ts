@@ -7,6 +7,11 @@ import os from 'os';
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
+function tryParseJson(text: string): any | null {
+  try { return JSON.parse(text); }
+  catch { return null; }
+}
+
 // Check if Upstash is configured 
 let ratelimit: Ratelimit | null = null;
 if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
@@ -242,10 +247,20 @@ export async function POST(req: NextRequest) {
 
       if (!circleRes.ok) {
         const errText = await circleRes.text();
-        console.error('CircleCI pipeline trigger failed:', errText);
+        const errJson = tryParseJson(errText);
+        console.error('CircleCI pipeline trigger failed:', {
+          status: circleRes.status,
+          statusText: circleRes.statusText,
+          error: errJson || errText,
+          apiUrl: `https://circleci.com/api/v2/project/${vcs}/${org}/${repo}/pipeline`
+        });
         return NextResponse.json({
           success: false,
-          error: 'Failed to queue build on CircleCI. Please try again.'
+          error: 'Failed to queue build on CircleCI. Please try again.',
+          debug: {
+            status: circleRes.status,
+            message: errJson?.message || errText
+          }
         }, { status: 500 });
       }
 
