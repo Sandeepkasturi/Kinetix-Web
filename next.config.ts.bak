@@ -65,8 +65,6 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  // Turbopack Config
-  turbopack: {},
 
   serverExternalPackages: ['@resvg/resvg-js', '@bubblewrap/core'],
 
@@ -105,11 +103,6 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Webpack config for Three.js canvas peerDep
-  webpack(config) {
-    config.externals = config.externals || [];
-    return config;
-  },
 
   // Image optimization
   images: {

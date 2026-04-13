@@ -3,7 +3,8 @@
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Check, Rocket, Zap, Crown, ArrowRight, Globe, IndianRupee } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 type Region = 'IN' | 'INTL';
@@ -91,9 +92,11 @@ const plans: Plan[] = [
   },
 ];
 
-export default function PricingPage() {
+function PricingContent() {
   const [region, setRegion] = useState<Region>('INTL');
   const [detected, setDetected] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   useEffect(() => {
     // Detect region via timezone heuristic
@@ -105,6 +108,28 @@ export default function PricingPage() {
     }
     setDetected(true);
   }, []);
+
+  useEffect(() => {
+    const status = searchParams.get('checkout_status');
+    const orderId = searchParams.get('order_id');
+
+    if (status === 'success' && orderId) {
+      // Verify payment on backend
+      fetch('/api/checkout/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: orderId }),
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.isPaid) {
+          alert('Payment verified! Welcome to Kinetix Pro.');
+          router.replace('/pricing'); // Clear params
+        }
+      })
+      .catch(e => console.error('Verification failed', e));
+    }
+  }, [searchParams, router]);
 
   const isIN = region === 'IN';
 
@@ -268,7 +293,34 @@ export default function PricingPage() {
                           ? 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-[0_0_24px_rgba(16,185,129,0.25)] hover:shadow-[0_0_32px_rgba(16,185,129,0.4)] hover:-translate-y-0.5'
                           : 'border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] text-[#94a3b8]'
                       }`}
-                      onClick={() => alert('Cashfree checkout — coming soon!')}
+                      onClick={async () => {
+                        try {
+                          const { load } = await import('@cashfreepayments/cashfree-js');
+                          const cashfree = await load({ 
+                            mode: process.env.NEXT_PUBLIC_CASHFREE_ENV === 'production' ? 'production' : 'sandbox' 
+                          });
+
+                          const res = await fetch('/api/checkout', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                              plan: plan.name.toLowerCase(),
+                              customerEmail: 'hello@kinetixapp.com',
+                            }),
+                          });
+
+                          if (!res.ok) throw new Error('Order creation failed');
+                          const { payment_session_id } = await res.json();
+
+                          await cashfree.checkout({
+                            paymentSessionId: payment_session_id,
+                            returnUrl: `${window.location.origin}/pricing?checkout_status=success&order_id={order_id}`,
+                          });
+                        } catch (err: any) {
+                          console.error('Checkout failed:', err);
+                          alert('Checkout failed to initialize.');
+                        }
+                      }}
                     >
                       {plan.ctaLabel}
                       <ArrowRight className="w-4 h-4" />
@@ -340,8 +392,16 @@ export default function PricingPage() {
           </div>
         </div>
       </section>
-
       <Footer />
     </main>
   );
 }
+
+export default function PricingPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PricingContent />
+    </Suspense>
+  );
+}
+

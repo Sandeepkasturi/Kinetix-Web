@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
+import { PLANS, PlanKey } from '@/lib/pricing';
 
 export async function POST(req: NextRequest) {
   try {
-    const { amount, planName, customerPhone, customerEmail, customerName } = await req.json();
+    const { plan, customerPhone, customerEmail, customerName } = await req.json();
+
+    const planKey = (plan || 'pro').toLowerCase() as PlanKey;
+    const selectedPlan = PLANS[planKey];
+
+    if (!selectedPlan) {
+      return NextResponse.json({ error: 'Invalid plan selected.' }, { status: 400 });
+    }
 
     const appId = process.env.CASHFREE_APP_ID;
     const secretKey = process.env.CASHFREE_SECRET_KEY;
@@ -15,22 +23,21 @@ export async function POST(req: NextRequest) {
     }
 
     const host = isProd ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
-
     const orderId = `ORDER_${Date.now()}_${uuidv4().split('-')[0]}`;
 
     const orderPayload = {
       order_id: orderId,
-      order_amount: amount,
+      order_amount: selectedPlan.priceINR,
       order_currency: 'INR',
-      order_note: `Kinetix Subscription: ${planName} Plan`,
+      order_note: `Kinetix Subscription: ${selectedPlan.name} Plan`,
       customer_details: {
         customer_id: `CUST_${Date.now()}`,
         customer_name: customerName || 'Kinetix User',
-        customer_email: customerEmail || 'hello@kinetixapp.com', // Replace with auth user later
-        customer_phone: customerPhone || '9999999999',           // Require phone later
+        customer_email: customerEmail || 'hello@kinetixapp.com',
+        customer_phone: customerPhone || '9999999999',
       },
       order_meta: {
-        return_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/pricing?checkout=success&order_id={order_id}`
+        return_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/pricing?checkout_status=success&order_id={order_id}`
       }
     };
 
