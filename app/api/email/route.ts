@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy');
 
 interface BuildNotificationPayload {
   to: string;
@@ -171,6 +171,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, id: data?.id });
   } catch (err: any) {
     console.error('Email API error:', err);
-    return NextResponse.json({ error: err.message || 'Internal error' }, { status: 500 });
+    return NextResponse.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 }

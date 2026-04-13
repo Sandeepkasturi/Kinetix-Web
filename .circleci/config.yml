@@ -116,6 +116,7 @@ jobs:
             ARTIFACT_URL="https://output.circle-artifacts.com/output/job/${CIRCLE_BUILD_NUM}/artifacts/0/app.apk"
             curl -sX POST "${BASE_URL}/api/notify" \
               -H "Content-Type: application/json" \
+              -H "x-notify-secret: ${NOTIFY_SECRET}" \
               -d "{
                 \"buildId\":    \"${BUILD_ID}\",
                 \"status\":     \"success\",
@@ -132,6 +133,7 @@ jobs:
           command: |
             curl -sX POST "${BASE_URL}/api/notify" \
               -H "Content-Type: application/json" \
+              -H "x-notify-secret: ${NOTIFY_SECRET}" \
               -d "{
                 \"buildId\":  \"${BUILD_ID}\",
                 \"status\":   \"failed\",
@@ -176,6 +178,7 @@ jobs:
             ARTIFACT_URL="https://output.circle-artifacts.com/output/job/${CIRCLE_BUILD_NUM}/artifacts/0/ios-source"
             curl -sX POST "${BASE_URL}/api/notify" \
               -H "Content-Type: application/json" \
+              -H "x-notify-secret: ${NOTIFY_SECRET}" \
               -d "{
                 \"buildId\":    \"${BUILD_ID}\",
                 \"status\":     \"success\",
@@ -191,6 +194,7 @@ jobs:
           command: |
             curl -sX POST "${BASE_URL}/api/notify" \
               -H "Content-Type: application/json" \
+              -H "x-notify-secret: ${NOTIFY_SECRET}" \
               -d "{
                 \"buildId\":  \"${BUILD_ID}\",
                 \"status\":   \"failed\",

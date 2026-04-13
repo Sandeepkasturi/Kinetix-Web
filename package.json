@@ -3,17 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
     "@bubblewrap/core": "^1.24.1",
+    "@cashfreepayments/cashfree-js": "^1.0.7",
     "@radix-ui/react-tabs": "^1.1.13",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
     "@types/adm-zip": "^0.5.7",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
     "adm-zip": "^0.5.16",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",

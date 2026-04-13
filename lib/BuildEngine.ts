@@ -1,10 +1,10 @@
-import { Config } from '@bubblewrap/core/dist/lib/Config';
-import { JdkHelper } from '@bubblewrap/core/dist/lib/jdk/JdkHelper';
-import { AndroidSdkTools } from '@bubblewrap/core/dist/lib/androidSdk/AndroidSdkTools';
-import { GradleWrapper } from '@bubblewrap/core/dist/lib/GradleWrapper';
-import { TwaManifest } from '@bubblewrap/core/dist/lib/TwaManifest';
-import { TwaGenerator } from '@bubblewrap/core/dist/lib/TwaGenerator';
-import { ConsoleLog } from '@bubblewrap/core/dist/lib/Log';
+import type { Config as ConfigType } from '@bubblewrap/core/dist/lib/Config';
+import type { JdkHelper as JdkHelperType } from '@bubblewrap/core/dist/lib/jdk/JdkHelper';
+import type { AndroidSdkTools as AndroidSdkToolsType } from '@bubblewrap/core/dist/lib/androidSdk/AndroidSdkTools';
+import type { GradleWrapper as GradleWrapperType } from '@bubblewrap/core/dist/lib/GradleWrapper';
+import type { TwaManifest as TwaManifestType } from '@bubblewrap/core/dist/lib/TwaManifest';
+import type { TwaGenerator as TwaGeneratorType } from '@bubblewrap/core/dist/lib/TwaGenerator';
+import type { ConsoleLog as ConsoleLogType } from '@bubblewrap/core/dist/lib/Log';
 import fs from 'fs-extra';
 import path from 'path';
 import { execSync } from 'child_process';
@@ -33,13 +33,14 @@ export interface BuildResult {
 
 export class BuildEngine {
   private config: BuildConfig;
-  private log: ConsoleLog;
+  private log: ConsoleLogType;
   private jdkPath: string;
   private androidSdkPath: string;
   private platform: 'android' | 'ios';
 
   constructor(config: BuildConfig) {
     this.config = config;
+    const { ConsoleLog } = require('@bubblewrap/core/dist/lib/Log');
     this.log = new ConsoleLog('BuildEngine');
     this.platform = config.platform ?? 'android';
 
@@ -277,6 +278,8 @@ export class BuildEngine {
       generatorApp: 'Kinetix',
     };
 
+    const { TwaManifest } = require('@bubblewrap/core/dist/lib/TwaManifest');
+    const { TwaGenerator } = require('@bubblewrap/core/dist/lib/TwaGenerator');
     const manifest = new TwaManifest(manifestConfig);
     const generator = new TwaGenerator();
 
@@ -302,11 +305,16 @@ export class BuildEngine {
         `${this.getExecutable('keytool')} -genkeypair -v ` +
         `-keystore "${keystorePath}" ` +
         `-alias kinetix -keyalg RSA -keysize 2048 -validity 10000 ` +
-        `-storepass kinetix123 -keypass kinetix123 ` +
+        `-storepass "${process.env.KEYSTORE_PASS || 'kinetix123'}" -keypass "${process.env.KEYSTORE_PASS || 'kinetix123'}" ` +
         `-dname "CN=Kinetix, OU=Apps, O=SKAV TECH, L=Hyderabad, ST=Telangana, C=IN"`,
         { stdio: 'inherit' }
       );
     }
+
+    const { Config } = require('@bubblewrap/core/dist/lib/Config');
+    const { JdkHelper } = require('@bubblewrap/core/dist/lib/jdk/JdkHelper');
+    const { AndroidSdkTools } = require('@bubblewrap/core/dist/lib/androidSdk/AndroidSdkTools');
+    const { GradleWrapper } = require('@bubblewrap/core/dist/lib/GradleWrapper');
 
     const bubblewrapConfig = new Config(this.jdkPath, this.androidSdkPath);
     const jdkHelper = new JdkHelper(process, bubblewrapConfig);
@@ -336,7 +344,7 @@ export class BuildEngine {
     execSync(
       `${this.getExecutable('java')} -Xmx1024M -jar "${apksignerJar}" sign ` +
       `--ks "${keystorePath}" --ks-key-alias kinetix ` +
-      `--ks-pass pass:kinetix123 --key-pass pass:kinetix123 ` +
+      `--ks-pass "pass:${process.env.KEYSTORE_PASS || 'kinetix123'}" --key-pass "pass:${process.env.KEYSTORE_PASS || 'kinetix123'}" ` +
       `--out "${outputApk}" "${inputApk}"`,
       { stdio: 'inherit' }
     );
@@ -348,7 +356,7 @@ export class BuildEngine {
     try {
       const cmd =
         `${this.getExecutable('keytool')} -list -v ` +
-        `-keystore "${keystorePath}" -alias kinetix -storepass kinetix123`;
+        `-keystore "${keystorePath}" -alias kinetix -storepass "${process.env.KEYSTORE_PASS || 'kinetix123'}"`;
       const output = execSync(cmd).toString();
       const match = output.match(/SHA256:\s*([A-Fa-f0-9:]+)/);
       return match ? match[1] : '';

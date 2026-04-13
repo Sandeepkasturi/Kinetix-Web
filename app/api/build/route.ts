@@ -4,15 +4,32 @@ import path from 'path';
 import fs from 'fs-extra';
 import os from 'os';
 
-// ─── Simple in-memory rate limiter ──────────────────────────────────────────
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+
+// Check if Upstash is configured 
+let ratelimit: Ratelimit | null = null;
+if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+  ratelimit = new Ratelimit({
+    redis: Redis.fromEnv(),
+    limiter: Ratelimit.slidingWindow(5, "60 s"),
+  });
+}
+
+// ─── Rate limiter ──────────────────────────────────────────
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_MAX = 5;       // max 5 builds
 const RATE_LIMIT_WINDOW = 60_000; // per 60 seconds
 
-function rateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
+async function rateLimit(ip: string): Promise<{ allowed: boolean; retryAfter?: number }> {
+  if (ratelimit) {
+    const { success, reset } = await ratelimit.limit(`build_limit_${ip}`);
+    return { allowed: success, retryAfter: success ? undefined : Math.ceil((reset - Date.now()) / 1000) };
+  }
+
+  // Fallback to in-memory
   const now = Date.now();
   const entry = rateLimitMap.get(ip);
-
   if (!entry || now > entry.resetAt) {
     rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
     return { allowed: true };
@@ -78,11 +95,11 @@ async function sendEmailNotification(payload: {
 // ─── POST /api/build ─────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   // 1. Rate limiting
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || req.headers.get('x-real-ip')
+  const ip = req.headers.get('x-real-ip')
+    || req.headers.get('x-forwarded-for')?.split(',').at(-1)?.trim()
     || 'unknown';
 
-  const rateLimitResult = rateLimit(ip);
+  const rateLimitResult = await rateLimit(ip);
   if (!rateLimitResult.allowed) {
     return NextResponse.json(
       { success: false, error: `Too many requests. Try again in ${rateLimitResult.retryAfter}s.` },

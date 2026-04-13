@@ -10,6 +10,11 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function POST(req: NextRequest) {
   try {
+    const notifySecret = req.headers.get('x-notify-secret');
+    if (notifySecret !== process.env.NOTIFY_SECRET) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await req.json();
     const {
       buildId,
@@ -70,10 +75,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error('[Notify] Error:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'An internal error occurred.' }, { status: 500 });
   }
 }
-

@@ -68,6 +68,8 @@ const nextConfig: NextConfig = {
   // Turbopack Config
   turbopack: {},
 
+  serverExternalPackages: ['@resvg/resvg-js', '@bubblewrap/core'],
+
   // Security headers on all routes
   async headers() {
     return [

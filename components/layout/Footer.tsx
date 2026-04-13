@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Github, Linkedin, Mail, ArrowUpRight } from 'lucide-react';
 import { KinetixLogo } from '@/components/ui/KinetixLogo';
 
-const nav = [
+const nav: { heading: string; links: { href: string; label: string; external?: boolean }[] }[] = [
   {
     heading: 'Product',
     links: [
@@ -27,7 +27,7 @@ const nav = [
       { href: 'mailto:hello@kinetixapp.com', label: 'hello@kinetixapp.com', external: true },
     ],
   },
-] satisfies { heading: string; links: { href: string; label: string; external?: boolean }[] }[];
+];
 
 export function Footer() {
   return (
