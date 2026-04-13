@@ -28,7 +28,7 @@ parameters:
     default: ""
   base-url:
     type: string
-    default: "https://kinetixapp.com"
+    default: "https://kinetixweb.vercel.app"
   icon-url:
     type: string
     default: ""
