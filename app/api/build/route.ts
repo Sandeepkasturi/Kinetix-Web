@@ -213,45 +213,61 @@ export async function POST(req: NextRequest) {
       }
 
       // Dispatch GitHub Actions workflow
-      const dispatchRes = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/dispatches`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${githubToken}`,
-            Accept: 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json',
+      const dispatchUrl = `https://api.github.com/repos/${owner}/${repo}/dispatches`;
+      console.log(`[Build] Dispatching workflow to: ${dispatchUrl}`);
+      
+      const dispatchRes = await fetch(dispatchUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${githubToken}`,
+          Accept: 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          event_type: 'build-apk',
+          client_payload: {
+            appName,
+            appUrl,
+            buildId,
+            platform,
+            iconRepoPath,
+            enableDeepLinks: String(enableDeepLinks),
+            enableNotifications: String(enableNotifications),
+            email: rawEmail,
+            baseUrl,
           },
-          body: JSON.stringify({
-            event_type: 'build-apk',
-            client_payload: {
-              appName,
-              appUrl,
-              buildId,
-              platform,
-              iconRepoPath,
-              enableDeepLinks: String(enableDeepLinks),
-              enableNotifications: String(enableNotifications),
-              email: rawEmail,
-              baseUrl,
-            },
-          }),
-        }
-      );
+        }),
+      });
 
       if (!dispatchRes.ok) {
         const errText = await dispatchRes.text();
+        const errJson = tryParseJson(errText);
         console.error('GitHub dispatch failed:', {
           status: dispatchRes.status,
           statusText: dispatchRes.statusText,
-          error: errText,
+          error: errJson || errText,
           owner,
-          repo
+          repo,
+          url: dispatchUrl
         });
+        
+        let errorMessage = 'Failed to queue build.';
+        if (dispatchRes.status === 403) {
+          errorMessage = 'GitHub API Forbidden. Ensure GITHUB_PAT has "repo" scope and workflow_dispatch is enabled.';
+        } else if (dispatchRes.status === 404) {
+          errorMessage = 'Repository not found. Check GITHUB_OWNER and GITHUB_REPO settings.';
+        } else if (dispatchRes.status === 401) {
+          errorMessage = 'GitHub authentication failed. Check if GITHUB_PAT is valid.';
+        }
+        
         return NextResponse.json({
           success: false,
-          error: `Failed to queue build: ${dispatchRes.statusText}. Please ensure GITHUB_PAT is set correctly in Vercel.`,
-          debug: { githubStatus: dispatchRes.status, githubError: errText }
+          error: errorMessage,
+          debug: { 
+            githubStatus: dispatchRes.status, 
+            githubError: errJson?.message || errText,
+            hint: 'Visit /api/github-debug to verify your GitHub configuration'
+          }
         }, { status: 500 });
       }
 

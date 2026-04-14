@@ -48,7 +48,7 @@ jobs:
     if: |
       (github.event.client_payload.platform || inputs.platform || 'android') == 'android'
     permissions:
-      contents: read
+      contents: write
       actions: write
 
     env:
@@ -95,10 +95,21 @@ jobs:
       - name: Download custom icon (if provided)
         env:
           ICON_PATH: ${{ github.event.client_payload.iconRepoPath }}
-          GH_TOKEN:  ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ -n "$ICON_PATH" ]; then
-            gh api "repos/${{ github.repository }}/contents/$ICON_PATH" --jq '.download_url' | xargs curl -fsSL -o icon.png
+          if [ -n "$ICON_PATH" ] && [ "$ICON_PATH" != "" ]; then
+            echo "Downloading icon from: $ICON_PATH"
+            DOWNLOAD_URL=$(curl -s -H "Authorization: token $GH_TOKEN" \
+              "https://api.github.com/repos/${{ github.repository }}/contents/$ICON_PATH" | \
+              grep -o '"download_url": "[^"]*' | cut -d'"' -f4)
+            if [ -n "$DOWNLOAD_URL" ]; then
+              curl -fsSL "$DOWNLOAD_URL" -o icon.png
+              echo "Icon downloaded successfully"
+            else
+              echo "Could not get download URL, skipping icon"
+            fi
+          else
+            echo "No custom icon provided"
           fi
 
       - name: Run Kinetix build engine
@@ -123,6 +134,7 @@ jobs:
         run: |
           curl -X POST "${{ env.BASE_URL }}/api/notify" \
             -H "Content-Type: application/json" \
+            -H "x-notify-secret: ${{ secrets.NOTIFY_SECRET }}" \
             -d '{
               "buildId": "${{ env.BUILD_ID }}",
               "status": "success",
@@ -138,6 +150,7 @@ jobs:
         run: |
           curl -X POST "${{ env.BASE_URL }}/api/notify" \
             -H "Content-Type: application/json" \
+            -H "x-notify-secret: ${{ secrets.NOTIFY_SECRET }}" \
             -d '{
               "buildId": "${{ env.BUILD_ID }}",
               "status": "failed",
@@ -192,6 +205,7 @@ jobs:
         run: |
           curl -X POST "${{ env.BASE_URL }}/api/notify" \
             -H "Content-Type: application/json" \
+            -H "x-notify-secret: ${{ secrets.NOTIFY_SECRET }}" \
             -d '{
               "buildId": "${{ env.BUILD_ID }}",
               "status": "success",
