@@ -2,11 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * POST /api/notify
- * Called by the CI system (GitHub Actions OR CircleCI) once a build completes or fails.
+ * Called by GitHub Actions once a build completes or fails.
  * Triggers the final email notification to the user.
- *
- * CircleCI sends:  { buildId, status, artifactUrl, sha256, appName, email, platform }
- * GitHub Actions:  { buildId, status, artifactId,  sha256, appName, email, platform, error }
  */
 export async function POST(req: NextRequest) {
   try {
@@ -19,34 +16,27 @@ export async function POST(req: NextRequest) {
     const {
       buildId,
       status,
-      artifactId,    // GitHub Actions artifact ID (legacy)
-      artifactUrl,   // CircleCI direct artifact URL
+      artifactId,
       sha256,
       appName,
       email,
       platform,
       error,
+      message,
     } = body;
 
     if (!buildId || !status) {
       return NextResponse.json({ error: 'Missing buildId or status' }, { status: 400 });
     }
 
-    console.log(`[Notify] Build ${buildId} → ${status}`, { artifactId, artifactUrl, sha256, email });
+    console.log(`[Notify] Build ${buildId} → ${status}`, { artifactId, sha256, email, message });
 
     if (email) {
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `https://${req.headers.get('host')}`;
 
-      // Build the download URL depending on which CI system reported back
       let downloadUrl: string | undefined;
-      if (status === 'success') {
-        if (artifactUrl) {
-          // CircleCI: proxy via /api/artifact?url=<encoded>
-          downloadUrl = `${baseUrl}/api/artifact?url=${encodeURIComponent(artifactUrl)}`;
-        } else if (artifactId) {
-          // GitHub Actions: proxy via /api/artifact?artifactId=<id>
-          downloadUrl = `${baseUrl}/api/artifact?artifactId=${artifactId}`;
-        }
+      if (status === 'success' && artifactId) {
+        downloadUrl = `${baseUrl}/api/artifact?artifactId=${artifactId}`;
       }
 
       const emailPayload = {
@@ -58,7 +48,7 @@ export async function POST(req: NextRequest) {
         status: status === 'success' ? 'completed' : 'failed',
         downloadUrl,
         sha256,
-        errorMessage: error,
+        errorMessage: error || message,
       };
 
       try {
