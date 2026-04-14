@@ -241,10 +241,17 @@ export async function POST(req: NextRequest) {
 
       if (!dispatchRes.ok) {
         const errText = await dispatchRes.text();
-        console.error('GitHub dispatch failed:', errText);
+        console.error('GitHub dispatch failed:', {
+          status: dispatchRes.status,
+          statusText: dispatchRes.statusText,
+          error: errText,
+          owner,
+          repo
+        });
         return NextResponse.json({
           success: false,
-          error: 'Failed to queue build. Please try again.'
+          error: `Failed to queue build: ${dispatchRes.statusText}. Please ensure GITHUB_PAT is set correctly in Vercel.`,
+          debug: { githubStatus: dispatchRes.status, githubError: errText }
         }, { status: 500 });
       }
 
