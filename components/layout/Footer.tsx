@@ -24,7 +24,7 @@ const nav: { heading: string; links: { href: string; label: string; external?: b
     links: [
       { href: 'https://github.com/sandeepkasturi', label: 'GitHub', external: true },
       { href: 'https://linkedin.com/in/sandeepkasturi9', label: 'LinkedIn', external: true },
-      { href: 'mailto:hello@kinetixapp.com', label: 'hello@kinetixapp.com', external: true },
+      { href: 'mailto:skavtech.in@gmail.com', label: 'skavtech.in@gmail.com', external: true },
     ],
   },
 ];
@@ -64,7 +64,7 @@ export function Footer() {
                 <Linkedin className="w-3.5 h-3.5" />
               </a>
               <a
-                href="mailto:hello@kinetixapp.com"
+                href="mailto:skavtech.in@gmail.com"
                 aria-label="Email"
                 className="w-8 h-8 flex items-center justify-center rounded-lg border border-white/[0.07] text-[#475569] hover:text-white hover:border-white/[0.14] transition-all"
               >

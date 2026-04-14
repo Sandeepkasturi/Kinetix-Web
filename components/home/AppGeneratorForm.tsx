@@ -330,22 +330,34 @@ export function AppGeneratorForm() {
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { id: 'android', label: 'Android APK', icon: Smartphone },
-                    { id: 'ios', label: 'iOS IPA', icon: Apple },
-                  ].map(({ id, label, icon: Icon }) => (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => setPlatform(id as 'android' | 'ios')}
-                      disabled={status === 'building'}
-                      className={`flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
-                        platform === id
-                          ? 'border-emerald-500/40 bg-emerald-500/8 text-white'
-                          : 'border-white/[0.07] bg-white/[0.02] text-[#64748b] hover:text-[#94a3b8] hover:bg-white/[0.04]'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {label}
-                    </button>
+                    { id: 'ios', label: 'iOS IPA', icon: Apple, comingSoon: true },
+                  ].map(({ id, label, icon: Icon, comingSoon }) => (
+                    <div key={id} className="relative">
+                      <button
+                        type="button"
+                        onClick={() => !comingSoon && setPlatform(id as 'android' | 'ios')}
+                        disabled={status === 'building' || comingSoon}
+                        className={`w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                          platform === id && !comingSoon
+                            ? 'border-emerald-500/40 bg-emerald-500/8 text-white'
+                            : 'border-white/[0.07] bg-white/[0.02] text-[#64748b] hover:text-[#94a3b8] hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        {label}
+                      </button>
+                      {comingSoon && (
+                        <div className="absolute inset-0 flex items-center justify-center rounded-xl overflow-hidden">
+                          <div 
+                            className="absolute inset-0 bg-[#020617]/70 backdrop-blur-[2px]"
+                            onClick={(e) => e.preventDefault()}
+                          />
+                          <span className="relative z-10 text-[10px] font-semibold tracking-wider uppercase text-white/90 px-2 py-1 rounded bg-emerald-500/80 shadow-lg">
+                            Coming Soon
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>

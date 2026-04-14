@@ -74,18 +74,18 @@ export default function Home() {
           <div className="flex items-center gap-2 mb-8">
             <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-widest uppercase text-emerald-400/80">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Kinetix Engine v2 — iOS support now available
+              Kinetix Engine v2 — Android builds powered by GitHub Actions
             </span>
           </div>
 
           {/* Headline */}
           <h1
-            className="text-5xl md:text-[68px] font-black tracking-[-0.03em] text-white leading-[1.05] mb-6 max-w-3xl"
+            className="text-5xl md:text-[68px] font-black tracking-[-0.03em] text-white leading-[1.05] mb-6 max-w-3xl animate-fade-in-up"
           >
             Turn any website into a native mobile app.
           </h1>
 
-          <p className="text-lg text-[#64748b] max-w-xl leading-relaxed mb-10">
+          <p className="text-lg text-[#64748b] max-w-xl leading-relaxed mb-10 animate-fade-in-up animate-delay-100">
             No code, no app store registration. Paste your URL and get a signed{' '}
             <span className="text-[#94a3b8]">Android APK</span> or{' '}
             <span className="text-[#94a3b8]">iOS IPA</span>{' '}
@@ -93,7 +93,7 @@ export default function Home() {
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-wrap items-center gap-3 mb-20">
+          <div className="flex flex-wrap items-center gap-3 mb-20 animate-fade-in-up animate-delay-200">
             <Link
               href="/#generate"
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm transition-colors"
@@ -110,7 +110,7 @@ export default function Home() {
           </div>
 
           {/* Stats row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-px border border-white/[0.06] rounded-2xl overflow-hidden bg-white/[0.04]">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-px border border-white/[0.06] rounded-2xl overflow-hidden bg-white/[0.04] animate-fade-in-up animate-delay-300">
             {stats.map((s) => (
               <div
                 key={s.label}
@@ -126,7 +126,7 @@ export default function Home() {
 
       {/* ─── GENERATOR ────────────────────────────────────────── */}
       <section id="generate" className="py-20 scroll-mt-16 border-t border-white/[0.04]">
-        <div className="container mx-auto px-6 max-w-5xl">
+        <div className="container mx-auto px-6 max-w-5xl animate-fade-in-up animate-delay-200">
           <div className="mb-10">
             <p className="text-[11px] font-semibold text-[#475569] uppercase tracking-widest mb-2">App Builder</p>
             <h2 className="text-2xl md:text-3xl font-bold text-white">Generate your app</h2>
@@ -141,12 +141,12 @@ export default function Home() {
       {/* ─── FEATURES ─────────────────────────────────────────── */}
       <section className="py-20 border-t border-white/[0.04]">
         <div className="container mx-auto px-6 max-w-5xl">
-          <div className="mb-12">
+          <div className="mb-12 animate-fade-in-up">
             <p className="text-[11px] font-semibold text-[#475569] uppercase tracking-widest mb-2">Platform</p>
             <h2 className="text-2xl md:text-3xl font-bold text-white">Everything included</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/[0.04] border border-white/[0.06] rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/[0.04] border border-white/[0.06] rounded-2xl overflow-hidden animate-fade-in-up animate-delay-100">
             {features.map((f) => {
               const Icon = f.icon;
               return (

@@ -93,19 +93,11 @@ const plans: Plan[] = [
 ];
 
 function PricingContent() {
-  const [region, setRegion] = useState<Region>('INTL');
   const [detected, setDetected] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
 
   useEffect(() => {
-    // Detect region via timezone heuristic
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz.startsWith('Asia/Kolkata') || tz.startsWith('Asia/Calcutta')) {
-      setRegion('IN');
-    } else {
-      setRegion('INTL');
-    }
     setDetected(true);
   }, []);
 
@@ -138,7 +130,7 @@ function PricingContent() {
     }
   }, [searchParams, router]);
 
-  const isIN = region === 'IN';
+  }, [searchParams, router]);
 
   return (
     <main className="min-h-screen bg-[#020617] text-[#f1f5f9]">
@@ -169,33 +161,6 @@ function PricingContent() {
             Scale as you grow. No hidden fees, no surprises. Cancel anytime.
           </p>
 
-          {/* Region Toggle */}
-          {detected && (
-            <div className="inline-flex items-center gap-1 p-1 rounded-xl border border-white/[0.06] bg-white/[0.03] mb-16">
-              <button
-                onClick={() => setRegion('IN')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  isIN
-                    ? 'bg-emerald-500 text-white shadow-[0_0_16px_rgba(16,185,129,0.3)]'
-                    : 'text-[#64748b] hover:text-[#94a3b8]'
-                }`}
-              >
-                <IndianRupee className="w-3.5 h-3.5" />
-                India (INR)
-              </button>
-              <button
-                onClick={() => setRegion('INTL')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  !isIN
-                    ? 'bg-emerald-500 text-white shadow-[0_0_16px_rgba(16,185,129,0.3)]'
-                    : 'text-[#64748b] hover:text-[#94a3b8]'
-                }`}
-              >
-                <Globe className="w-3.5 h-3.5" />
-                International (USD)
-              </button>
-            </div>
-          )}
         </div>
       </section>
 
@@ -243,10 +208,10 @@ function PricingContent() {
                       <span className={`text-4xl font-black tracking-tight ${
                         plan.highlight ? 'text-emerald-400' : 'text-white'
                       }`}>
-                        {isIN ? plan.priceINR : plan.priceUSD}
+                        {plan.priceINR}
                       </span>
                       <span className="text-sm text-[#475569]">
-                        {isIN ? plan.periodINR : plan.periodUSD}
+                        {plan.periodINR}
                       </span>
                     </div>
 
