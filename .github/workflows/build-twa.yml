@@ -134,7 +134,6 @@ jobs:
         run: |
           curl -X POST "${{ env.BASE_URL }}/api/notify" \
             -H "Content-Type: application/json" \
-            -H "x-notify-secret: ${{ secrets.NOTIFY_SECRET }}" \
             -d '{
               "buildId": "${{ env.BUILD_ID }}",
               "status": "success",
@@ -150,7 +149,6 @@ jobs:
         run: |
           curl -X POST "${{ env.BASE_URL }}/api/notify" \
             -H "Content-Type: application/json" \
-            -H "x-notify-secret: ${{ secrets.NOTIFY_SECRET }}" \
             -d '{
               "buildId": "${{ env.BUILD_ID }}",
               "status": "failed",
@@ -205,7 +203,6 @@ jobs:
         run: |
           curl -X POST "${{ env.BASE_URL }}/api/notify" \
             -H "Content-Type: application/json" \
-            -H "x-notify-secret: ${{ secrets.NOTIFY_SECRET }}" \
             -d '{
               "buildId": "${{ env.BUILD_ID }}",
               "status": "success",

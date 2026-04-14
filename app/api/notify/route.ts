@@ -7,11 +7,6 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function POST(req: NextRequest) {
   try {
-    const notifySecret = req.headers.get('x-notify-secret');
-    if (notifySecret !== process.env.NOTIFY_SECRET) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await req.json();
     const {
       buildId,
