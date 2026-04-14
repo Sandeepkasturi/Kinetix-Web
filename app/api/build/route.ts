@@ -213,7 +213,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Dispatch GitHub Actions workflow
-      const dispatchUrl = `https://api.github.com/repos/${owner}/${repo}/dispatches`;
+      const dispatchUrl = `https://api.github.com/repos/${owner}/${repo}/actions/dispatches`;
       console.log(`[Build] Dispatching workflow to: ${dispatchUrl}`);
       
       const dispatchRes = await fetch(dispatchUrl, {
@@ -253,9 +253,9 @@ export async function POST(req: NextRequest) {
         
         let errorMessage = 'Failed to queue build.';
         if (dispatchRes.status === 403) {
-          errorMessage = 'GitHub API Forbidden. Ensure GITHUB_PAT has "repo" scope and workflow_dispatch is enabled.';
+          errorMessage = 'GitHub API Forbidden. Ensure GITHUB_PAT has "repo" scope.';
         } else if (dispatchRes.status === 404) {
-          errorMessage = 'Repository not found. Check GITHUB_OWNER and GITHUB_REPO settings.';
+          errorMessage = 'Repository or workflow not found. Check GITHUB_OWNER and GITHUB_REPO settings.';
         } else if (dispatchRes.status === 401) {
           errorMessage = 'GitHub authentication failed. Check if GITHUB_PAT is valid.';
         }

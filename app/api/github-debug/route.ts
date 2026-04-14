@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Test workflow dispatch permission
-    const workflowRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows`, {
+    const workflowRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/build-twa.yml`, {
       headers: {
         Authorization: `Bearer ${githubToken}`,
         Accept: 'application/vnd.github.v3+json',
