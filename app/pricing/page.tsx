@@ -130,8 +130,6 @@ function PricingContent() {
     }
   }, [searchParams, router]);
 
-  }, [searchParams, router]);
-
   return (
     <main className="min-h-screen bg-[#020617] text-[#f1f5f9]">
       <Navbar />
