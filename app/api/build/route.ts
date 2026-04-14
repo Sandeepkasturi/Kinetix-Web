@@ -213,7 +213,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Dispatch GitHub Actions workflow
-      const dispatchUrl = `https://api.github.com/repos/${owner}/${repo}/actions/dispatches`;
+      const dispatchUrl = `https://api.github.com/repos/${owner}/${repo}/dispatches`;
       console.log(`[Build] Dispatching workflow to: ${dispatchUrl}`);
       
       const dispatchRes = await fetch(dispatchUrl, {
