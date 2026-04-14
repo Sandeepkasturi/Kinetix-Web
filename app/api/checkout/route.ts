@@ -1,70 +1,69 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { v4 as uuidv4 } from 'uuid';
+import DodoPayments from 'dodopayments';
 import { PLANS, PlanKey } from '@/lib/pricing';
 
 export async function POST(req: NextRequest) {
   try {
-    const { plan, customerPhone, customerEmail, customerName } = await req.json();
+    const { plan, customerEmail, customerName } = await req.json();
 
     const planKey = (plan || 'pro').toLowerCase() as PlanKey;
     const selectedPlan = PLANS[planKey];
 
-    if (!selectedPlan) {
-      return NextResponse.json({ error: 'Invalid plan selected.' }, { status: 400 });
+    if (!selectedPlan || planKey === 'starter') {
+      return NextResponse.json({ error: 'Invalid or missing plan.' }, { status: 400 });
     }
 
-    const appId = process.env.CASHFREE_APP_ID;
-    const secretKey = process.env.CASHFREE_SECRET_KEY;
-    const isProd = process.env.CASHFREE_ENV === 'production';
+    const isProd = process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
 
-    if (!appId || !secretKey) {
-      console.error('[Cashfree] Missing CASHFREE_APP_ID or CASHFREE_SECRET_KEY');
-      return NextResponse.json({ error: 'Payment gateway is not configured.' }, { status: 500 });
+    let productId = '';
+    if (planKey === 'pro') {
+      productId = process.env.DODO_PRODUCT_ID_PRO || '';
+    } else if (planKey === 'premium') {
+      productId = process.env.DODO_PRODUCT_ID_PREMIUM || '';
     }
 
-    const host = isProd ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
-    const orderId = `ORDER_${Date.now()}_${uuidv4().split('-')[0]}`;
+    if (!productId) {
+      console.warn(`[Checkout] Missing DODO_PRODUCT_ID for plan ${planKey}. Falling back to placeholder.`);
+      productId = `dodo_${planKey}_placeholder`;
+    }
 
-    const orderPayload = {
-      order_id: orderId,
-      order_amount: selectedPlan.priceINR,
-      order_currency: 'INR',
-      order_note: `Kinetix Subscription: ${selectedPlan.name} Plan`,
-      customer_details: {
-        customer_id: `CUST_${Date.now()}`,
-        customer_name: customerName || 'Kinetix User',
-        customer_email: customerEmail || 'hello@kinetixapp.com',
-        customer_phone: customerPhone || '9999999999',
-      },
-      order_meta: {
-        return_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/pricing?checkout_status=success&order_id={order_id}`
-      }
-    };
+    if (!process.env.DODO_PAYMENTS_API_KEY) {
+      console.error('[Checkout] Missing DODO_PAYMENTS_API_KEY environment variable');
+      return NextResponse.json({ error: 'Payment service not configured. Please contact support.' }, { status: 500 });
+    }
 
-    const res = await fetch(`${host}/orders`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-client-id': appId,
-        'x-client-secret': secretKey,
-        'x-api-version': '2023-08-01',
-      },
-      body: JSON.stringify(orderPayload),
+    const client = new DodoPayments({
+      environment: isProd ? 'live_mode' : 'test_mode',
+      // DODO_PAYMENTS_API_KEY is picked up automatically
     });
 
-    if (!res.ok) {
-      const errorData = await res.text();
-      console.error('[Cashfree] Create order error:', errorData);
-      return NextResponse.json({ error: 'Failed to create payment order.' }, { status: res.status });
-    }
+    const returnUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/pricing?checkout_status=success`;
 
-    const data = await res.json();
+    console.log('[Checkout] Creating session for plan:', planKey, 'productId:', productId);
+
+    const session = await client.checkoutSessions.create({
+      product_cart: [
+        {
+          product_id: productId,
+          quantity: 1
+        }
+      ],
+      return_url: returnUrl,
+      customer: {
+        email: customerEmail || 'hello@kinetixapp.com',
+        name: customerName || 'Kinetix User',
+      }
+    });
+
+    console.log('[Checkout] Session created:', session.session_id);
+
     return NextResponse.json({
-      payment_session_id: data.payment_session_id,
-      order_id: data.order_id,
+      url: session.checkout_url || (session as any).url,
+      session_id: session.session_id,
     });
   } catch (err: any) {
-    console.error('[Cashfree] Checkout error:', err);
-    return NextResponse.json({ error: 'An internal error occurred.' }, { status: 500 });
+    console.error('[DodoPayments] Checkout error:', err?.message || err);
+    console.error('[DodoPayments] Error details:', JSON.stringify(err, null, 2));
+    return NextResponse.json({ error: err?.message || 'Order creation failed' }, { status: 500 });
   }
 }

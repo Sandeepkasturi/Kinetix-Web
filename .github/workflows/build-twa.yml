@@ -157,11 +157,11 @@ jobs:
           retention-days: 7
 
   # ═══════════════════════════════════════════════════════
-  # iOS Build
+  # iOS Build — Coming Soon
   # ═══════════════════════════════════════════════════════
   build-ios:
-    name: 'iOS IPA Build'
-    runs-on: macos-14
+    name: 'iOS Build (Coming Soon)'
+    runs-on: ubuntu-latest
     if: |
       (github.event.client_payload.platform || inputs.platform) == 'ios'
     permissions:
@@ -169,83 +169,34 @@ jobs:
       actions: write
 
     env:
-      APP_NAME:          ${{ github.event.client_payload.appName        || inputs.appName }}
-      APP_URL:           ${{ github.event.client_payload.appUrl         || inputs.appUrl }}
       BUILD_ID:          ${{ github.event.client_payload.buildId        || inputs.buildId }}
-      BUILD_PLATFORM:    ios
-      ENABLE_DEEP_LINKS: ${{ github.event.client_payload.enableDeepLinks || inputs.enableDeepLinks || 'true' }}
       BUILD_EMAIL:       ${{ github.event.client_payload.email          || inputs.email }}
       BASE_URL:          ${{ github.event.client_payload.baseUrl        || inputs.baseUrl }}
+      APP_NAME:          ${{ github.event.client_payload.appName        || inputs.appName }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Select Xcode Version
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '15.4'
-
-      - name: Install npm dependencies
-        run: npm ci --prefer-offline --no-audit
-
-      - name: Download custom icon (if provided)
-        env:
-          ICON_PATH: ${{ github.event.client_payload.iconRepoPath }}
-          GH_TOKEN:  ${{ secrets.GITHUB_TOKEN }}
+      - name: 🚧 iOS Build Coming Soon
         run: |
-          if [ -n "$ICON_PATH" ]; then
-            gh api "repos/${{ github.repository }}/contents/$ICON_PATH" --jq '.download_url' | xargs curl -fsSL -o icon.png
-          fi
+          echo ""
+          echo "╔══════════════════════════════════════════════════════════════╗"
+          echo "║                                                              ║"
+          echo "║           🚀 iOS Build Coming Soon!                          ║"
+          echo "║                                                              ║"
+          echo "║   We are working on bringing iOS builds to GitHub Actions.  ║"
+          echo "║   Stay tuned for updates!                                   ║"
+          echo "║                                                              ║"
+          echo "╚══════════════════════════════════════════════════════════════╝"
+          echo ""
 
-      - name: Generate iOS project config
-        id: generate_ios
-        run: npx tsx scripts/build-action.ts
-
-      # NOTE: For a real IPA, we would need:
-      # 1. APPLE_CERTIFICATE_BASE64 and APPLE_CERTIFICATE_PASSWORD
-      # 2. PROVISIONING_PROFILE_BASE64
-      # Since we don't have these, we produce a "Development Archive" (App Source + Config)
-      # which the user can open in Xcode.
-
-      - name: Package iOS Project Source
-        id: upload_ios
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-source-${{ env.BUILD_ID }}
-          path: ios_project/
-          retention-days: 14
-
-      - name: Notify User
-        if: success()
+      - name: Notify User — Coming Soon
         run: |
           curl -X POST "${{ env.BASE_URL }}/api/notify" \
             -H "Content-Type: application/json" \
             -d '{
               "buildId": "${{ env.BUILD_ID }}",
               "status": "success",
-              "artifactId": "${{ steps.upload_ios.outputs.artifact-id }}",
               "appName": "${{ env.APP_NAME }}",
               "email": "${{ env.BUILD_EMAIL }}",
               "platform": "ios",
-              "message": "iOS build generated. Please note: Due to Apple policy, signing requires local Xcode. We have provided the full project source ready for one-click compilation."
-            }'
-
-      - name: Notify Failure
-        if: failure()
-        run: |
-          curl -X POST "${{ env.BASE_URL }}/api/notify" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "buildId": "${{ env.BUILD_ID }}",
-              "status": "failed",
-              "appName": "${{ env.APP_NAME }}",
-              "email": "${{ env.BUILD_EMAIL }}",
-              "error": "iOS asset generation failed. Please check build logs."
+              "message": "iOS builds are coming soon! We are working on adding macOS runner support to GitHub Actions. Stay tuned for updates."
             }'

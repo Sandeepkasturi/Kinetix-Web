@@ -3,6 +3,9 @@ const nextConfig = {
   serverExternalPackages: ['@resvg/resvg-js', '@bubblewrap/core'],
   poweredByHeader: false,
   compress: true,
+  turbopack: {
+    root: process.cwd(),
+  },
   images: {
     formats: ['image/avif', 'image/webp'],
     dangerouslyAllowSVG: true,

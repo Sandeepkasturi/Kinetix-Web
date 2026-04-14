@@ -7,7 +7,7 @@ import type { TwaGenerator as TwaGeneratorType } from '@bubblewrap/core/dist/lib
 import type { ConsoleLog as ConsoleLogType } from '@bubblewrap/core/dist/lib/Log';
 import fs from 'fs-extra';
 import path from 'path';
-import { execSync } from 'child_process';
+import { execSync, execFileSync } from 'child_process';
 import process from 'process';
 import os from 'os';
 
@@ -44,11 +44,36 @@ export class BuildEngine {
     this.log = new ConsoleLog('BuildEngine');
     this.platform = config.platform ?? 'android';
 
+    const findJavaWin = () => {
+      const javaDir = 'C:\\Program Files\\Java';
+      if (fs.existsSync(javaDir)) {
+        const parseVersion = (name: string): number => {
+          // Handle 'jdk-22', 'jdk-1.8', 'jdk-22.0.1' etc.
+          const m = name.match(/jdk[-_]?([\d.]+)/);
+          if (!m) return 0;
+          const parts = m[1].split('.');
+          // Convert 1.8 -> 8, 22 -> 22, 22.0.1 -> 22
+          const major = parts[0] === '1' ? Number(parts[1] || 0) : Number(parts[0]);
+          return major;
+        };
+        const dirs = fs.readdirSync(javaDir)
+          .filter(d => /^jdk/i.test(d) && fs.statSync(path.join(javaDir, d)).isDirectory())
+          .sort((a, b) => parseVersion(b) - parseVersion(a)); // highest first
+        // Require Java 11+ for Android Gradle Plugin 8.x
+        const suitable = dirs.find(d => parseVersion(d) >= 11);
+        if (suitable) return path.join(javaDir, suitable);
+        if (dirs.length) return path.join(javaDir, dirs[0]);
+      }
+      return 'C:\\Program Files\\Java\\jdk-22';
+    };
+
     this.jdkPath =
       process.env.JAVA_HOME ||
       (process.platform === 'win32'
-        ? 'C:\\Program Files\\Java\\jdk-21'
+        ? findJavaWin()
         : '/usr/lib/jvm/java-21-openjdk-amd64');
+
+    console.log(`[BuildEngine] Resolved JDK: ${this.jdkPath}`);
 
     this.androidSdkPath =
       process.env.ANDROID_HOME ||
@@ -63,7 +88,7 @@ export class BuildEngine {
   private getExecutable(binName: string): string {
     const isWin = process.platform === 'win32';
     const ext = isWin ? '.exe' : '';
-    return `"${path.join(this.jdkPath, 'bin', `${binName}${ext}`)}"`;
+    return `${path.join(this.jdkPath, 'bin', `${binName}${ext}`)}`;
   }
 
   private get packageId(): string {
@@ -83,31 +108,34 @@ export class BuildEngine {
       return this.config.appIconPath;
     }
 
-    // Generate a simple SVG default icon and convert to PNG path reference
-    // We'll write a placeholder PNG using a minimal 1×1 transparent PNG
-    // For production, this would be a nice gradient PNG
     const defaultIconPath = path.join(this.config.workingDir, 'default-icon.png');
 
-    // Copy bundled default icon if it exists, otherwise create minimal stub
-    const builtinDefault = path.resolve(process.cwd(), 'public', 'icon-192.png');
+    // Copy bundled default 512x512 icon if it exists 
+    const builtinDefault = path.resolve(process.cwd(), 'public', 'icon-512.png');
     if (fs.existsSync(builtinDefault)) {
       await fs.copy(builtinDefault, defaultIconPath);
     } else {
-      // Minimal 512×512 purple PNG - base64 encoded 1px placeholder
-      // In real use, replace with actual generated branded icon
-      const fallbackSrc = path.resolve(process.cwd(), 'public', 'favicon.ico');
-      if (fs.existsSync(fallbackSrc)) {
-        await fs.copy(fallbackSrc, defaultIconPath);
-      } else {
-        // Write a minimal valid PNG (1×1 pixel, purple)
-        const minimalPng = Buffer.from(
-          '89504e470d0a1a0a0000000d4948445200000001000000010806000000' +
-          '1f15c4890000000a4944415478016360f8cfc00000000200018de18f' +
-          '010000000049454e44ae426082',
-          'hex'
-        );
-        await fs.writeFile(defaultIconPath, minimalPng);
+      // Create a fallback transparent 512x512 PNG using the native crypto/zlib buffer 
+      const w = 512, h = 512;
+      const zlib = require('zlib');
+      const IHDR = Buffer.alloc(13);
+      IHDR.writeUInt32BE(w, 0); IHDR.writeUInt32BE(h, 4);
+      IHDR.writeUInt8(8, 8); IHDR.writeUInt8(6, 9);
+      IHDR.writeUInt8(0, 10); IHDR.writeUInt8(0, 11); IHDR.writeUInt8(0, 12);
+      const rawData = Buffer.alloc(h * (w * 4 + 1));
+      const IDAT = zlib.deflateSync(rawData);
+      function chunk(type: string, data: Buffer) {
+        const length = Buffer.alloc(4); length.writeUInt32BE(data.length, 0);
+        const typeBuf = Buffer.from(type);
+        const crc = zlib.crc32(Buffer.concat([typeBuf, data]));
+        const crcBuf = Buffer.alloc(4); crcBuf.writeUInt32BE(crc, 0);
+        return Buffer.concat([length, typeBuf, data, crcBuf]);
       }
+      const minimalPng = Buffer.concat([
+        Buffer.from('89504E470D0A1A0A', 'hex'),
+        chunk('IHDR', IHDR), chunk('IDAT', IDAT), chunk('IEND', Buffer.alloc(0))
+      ]);
+      await fs.writeFile(defaultIconPath, minimalPng);
     }
 
     return defaultIconPath;
@@ -301,27 +329,59 @@ export class BuildEngine {
 
     const keystorePath = path.join(this.config.workingDir, 'android.keystore');
     if (!fs.existsSync(keystorePath)) {
-      execSync(
-        `${this.getExecutable('keytool')} -genkeypair -v ` +
-        `-keystore "${keystorePath}" ` +
-        `-alias kinetix -keyalg RSA -keysize 2048 -validity 10000 ` +
-        `-storepass "${process.env.KEYSTORE_PASS || 'kinetix123'}" -keypass "${process.env.KEYSTORE_PASS || 'kinetix123'}" ` +
-        `-dname "CN=Kinetix, OU=Apps, O=SKAV TECH, L=Hyderabad, ST=Telangana, C=IN"`,
+      execFileSync(
+        this.getExecutable('keytool'),
+        [
+          '-genkeypair', '-v',
+          '-keystore', keystorePath,
+          '-alias', 'kinetix',
+          '-keyalg', 'RSA',
+          '-keysize', '2048',
+          '-validity', '10000',
+          '-storepass', process.env.KEYSTORE_PASS || 'kinetix123',
+          '-keypass', process.env.KEYSTORE_PASS || 'kinetix123',
+          '-dname', 'CN=Kinetix, OU=Apps, O=SKAV TECH, L=Hyderabad, ST=Telangana, C=IN'
+        ],
         { stdio: 'inherit' }
       );
     }
 
-    const { Config } = require('@bubblewrap/core/dist/lib/Config');
-    const { JdkHelper } = require('@bubblewrap/core/dist/lib/jdk/JdkHelper');
-    const { AndroidSdkTools } = require('@bubblewrap/core/dist/lib/androidSdk/AndroidSdkTools');
-    const { GradleWrapper } = require('@bubblewrap/core/dist/lib/GradleWrapper');
+    // Invoke gradlew directly so we can inject JAVA_HOME explicitly.
+    // Bubblewrap's GradleWrapper inherits the system env which may have an
+    // incompatible JVM (e.g. Java 8) on PATH.
+    const isWin = process.platform === 'win32';
+    const gradlewPath = path.join(this.config.workingDir, isWin ? 'gradlew.bat' : 'gradlew');
 
-    const bubblewrapConfig = new Config(this.jdkPath, this.androidSdkPath);
-    const jdkHelper = new JdkHelper(process, bubblewrapConfig);
-    // @ts-ignore
-    const androidSdkTools = new AndroidSdkTools(process, bubblewrapConfig, jdkHelper);
-    const gradleWrapper = new GradleWrapper(process, androidSdkTools, this.config.workingDir);
-    await gradleWrapper.assembleRelease();
+    // Make gradlew executable on Unix
+    if (!isWin) {
+      try { execFileSync('chmod', ['+x', gradlewPath]); } catch { /* ignore */ }
+    }
+
+    const gradleEnv = {
+      ...process.env,
+      JAVA_HOME: this.jdkPath,
+      // Ensure JAVA_HOME/bin is first on PATH so Gradle picks our JVM
+      PATH: `${path.join(this.jdkPath, 'bin')}${isWin ? ';' : ':'}${process.env.PATH}`,
+      ANDROID_HOME: this.androidSdkPath,
+      ANDROID_SDK_ROOT: this.androidSdkPath,
+    };
+
+    console.log(`[${this.config.buildId}] Running Gradle with JDK: ${this.jdkPath}`);
+
+    if (isWin) {
+      // On Windows, .bat files must be invoked via cmd.exe
+      execFileSync('cmd.exe', ['/c', gradlewPath, 'assembleRelease', '--stacktrace'], {
+        cwd: this.config.workingDir,
+        stdio: 'inherit',
+        env: gradleEnv,
+      });
+    } else {
+      execFileSync('bash', [gradlewPath, 'assembleRelease', '--stacktrace'], {
+        cwd: this.config.workingDir,
+        stdio: 'inherit',
+        env: gradleEnv,
+      });
+    }
   }
 
   private async signAndroidApk(): Promise<string> {
@@ -341,11 +401,19 @@ export class BuildEngine {
     const outputApk = path.join(apkDir, 'app-release-signed.apk');
     const keystorePath = path.join(this.config.workingDir, 'android.keystore');
 
-    execSync(
-      `${this.getExecutable('java')} -Xmx1024M -jar "${apksignerJar}" sign ` +
-      `--ks "${keystorePath}" --ks-key-alias kinetix ` +
-      `--ks-pass "pass:${process.env.KEYSTORE_PASS || 'kinetix123'}" --key-pass "pass:${process.env.KEYSTORE_PASS || 'kinetix123'}" ` +
-      `--out "${outputApk}" "${inputApk}"`,
+    execFileSync(
+      this.getExecutable('java'),
+      [
+        '-Xmx1024M',
+        '-jar', apksignerJar,
+        'sign',
+        '--ks', keystorePath,
+        '--ks-key-alias', 'kinetix',
+        '--ks-pass', `pass:${process.env.KEYSTORE_PASS || 'kinetix123'}`,
+        '--key-pass', `pass:${process.env.KEYSTORE_PASS || 'kinetix123'}`,
+        '--out', outputApk,
+        inputApk
+      ],
       { stdio: 'inherit' }
     );
 
@@ -354,10 +422,16 @@ export class BuildEngine {
 
   private getSha256Fingerprint(keystorePath: string): string {
     try {
-      const cmd =
-        `${this.getExecutable('keytool')} -list -v ` +
-        `-keystore "${keystorePath}" -alias kinetix -storepass "${process.env.KEYSTORE_PASS || 'kinetix123'}"`;
-      const output = execSync(cmd).toString();
+      const output = execFileSync(
+        this.getExecutable('keytool'),
+        [
+          '-list', '-v',
+          '-keystore', keystorePath,
+          '-alias', 'kinetix',
+          '-storepass', process.env.KEYSTORE_PASS || 'kinetix123'
+        ],
+        { stdio: 'pipe' }
+      ).toString();
       const match = output.match(/SHA256:\s*([A-Fa-f0-9:]+)/);
       return match ? match[1] : '';
     } catch (e) {

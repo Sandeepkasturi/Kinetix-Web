@@ -111,23 +111,30 @@ function PricingContent() {
 
   useEffect(() => {
     const status = searchParams.get('checkout_status');
-    const orderId = searchParams.get('order_id');
-
-    if (status === 'success' && orderId) {
-      // Verify payment on backend
-      fetch('/api/checkout/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order_id: orderId }),
-      })
-      .then(r => r.json())
-      .then(data => {
-        if (data.isPaid) {
-          alert('Payment verified! Welcome to Kinetix Pro.');
-          router.replace('/pricing'); // Clear params
-        }
-      })
-      .catch(e => console.error('Verification failed', e));
+    
+    // We expect Dodo Payments checkout flow to return success. Check local storage for the cached session_id
+    if (status === 'success') {
+      const sessionId = localStorage.getItem('dodo_session_id');
+      
+      if (sessionId) {
+        // Verify payment on backend
+        fetch('/api/checkout/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessionId }),
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.isPaid) {
+            alert('Payment verified! Welcome to Kinetix Pro.');
+            localStorage.removeItem('dodo_session_id');
+            router.replace('/pricing'); // Clear params
+          }
+        })
+        .catch(e => console.error('Verification failed', e));
+      } else {
+        router.replace('/pricing'); // Clear params if no session
+      }
     }
   }, [searchParams, router]);
 
@@ -247,15 +254,10 @@ function PricingContent() {
                     <div className="mt-3">
                       {(plan.name === 'Starter') ? (
                         <span className="text-[10px] text-[#334155] font-medium">No payment required</span>
-                      ) : isIN ? (
-                        <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-[#475569] border border-white/[0.05] rounded-md px-2 py-0.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                          Powered by Cashfree
-                        </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-[#475569] border border-white/[0.05] rounded-md px-2 py-0.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                          Dodo Payments · Coming Soon
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                          Powered by Dodo Payments
                         </span>
                       )}
                     </div>
@@ -286,7 +288,7 @@ function PricingContent() {
                       {plan.ctaLabel}
                       <ArrowRight className="w-4 h-4" />
                     </Link>
-                  ) : isIN ? (
+                  ) : (
                     <button
                       className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all ${
                         plan.highlight
@@ -295,11 +297,6 @@ function PricingContent() {
                       }`}
                       onClick={async () => {
                         try {
-                          const { load } = await import('@cashfreepayments/cashfree-js');
-                          const cashfree = await load({ 
-                            mode: process.env.NEXT_PUBLIC_CASHFREE_ENV === 'production' ? 'production' : 'sandbox' 
-                          });
-
                           const res = await fetch('/api/checkout', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -309,32 +306,27 @@ function PricingContent() {
                             }),
                           });
 
-                          if (!res.ok) throw new Error('Order creation failed');
-                          const { payment_session_id } = await res.json();
+                          if (!res.ok) throw new Error('Session creation failed');
+                          const { url, session_id } = await res.json();
+                          
+                          if (session_id) {
+                            localStorage.setItem('dodo_session_id', session_id);
+                          }
 
-                          await cashfree.checkout({
-                            paymentSessionId: payment_session_id,
-                            returnUrl: `${window.location.origin}/pricing?checkout_status=success&order_id={order_id}`,
-                          });
+                          if (url) {
+                            window.location.href = url;
+                          } else {
+                            throw new Error('No checkout URL returned');
+                          }
                         } catch (err: any) {
                           console.error('Checkout failed:', err);
-                          alert('Checkout failed to initialize.');
+                          const message = err?.message || 'Checkout failed to initialize. Please try again.';
+                          alert(message);
                         }
                       }}
                     >
                       {plan.ctaLabel}
                       <ArrowRight className="w-4 h-4" />
-                    </button>
-                  ) : (
-                    <button
-                      className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all opacity-60 cursor-not-allowed ${
-                        plan.highlight
-                          ? 'bg-emerald-500 text-white'
-                          : 'border border-white/[0.08] bg-white/[0.03] text-[#94a3b8]'
-                      }`}
-                      disabled
-                    >
-                      Coming Soon
                     </button>
                   )}
                 </div>

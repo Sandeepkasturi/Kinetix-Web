@@ -1,38 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
+import DodoPayments from 'dodopayments';
 import { PLANS } from '@/lib/pricing';
 
 export async function POST(req: NextRequest) {
   try {
-    const { order_id } = await req.json();
+    const { session_id } = await req.json();
 
-    if (!order_id) {
-      return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
+    if (!session_id) {
+      return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
     }
 
-    const appId = process.env.CASHFREE_APP_ID;
-    const secretKey = process.env.CASHFREE_SECRET_KEY;
-    const isProd = process.env.CASHFREE_ENV === 'production';
-
-    if (!appId || !secretKey) {
-      return NextResponse.json({ error: 'Cashfree not configured' }, { status: 500 });
-    }
-
-    const host = isProd ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
-
-    const res = await fetch(`${host}/orders/${order_id}`, {
-      headers: {
-        'x-client-id': appId,
-        'x-client-secret': secretKey,
-        'x-api-version': '2023-08-01',
-      },
+    const isProd = process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
+    const client = new DodoPayments({
+      environment: isProd ? 'live_mode' : 'test_mode',
+      // DODO_PAYMENTS_API_KEY is picked up automatically
     });
 
-    if (!res.ok) {
-      return NextResponse.json({ error: 'Failed to fetch order status' }, { status: res.status });
-    }
+    const sessionData = await client.checkoutSessions.retrieve(session_id);
 
-    const data = await res.json();
-    const isPaid = data.order_status === 'PAID';
+    const isPaid = sessionData.payment_status === 'succeeded';
 
     if (isPaid) {
       // Trigger success email via internal API call to /api/email
@@ -44,11 +30,11 @@ export async function POST(req: NextRequest) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             type: 'payment',
-            to: data.customer_details.customer_email,
-            customerName: data.customer_details.customer_name,
-            planName: data.order_note.split(': ')[1] || 'Pro',
-            amount: data.order_amount,
-            orderId: order_id,
+            to: sessionData.customer_email || 'hello@kinetixapp.com',
+            customerName: sessionData.customer_name || 'Kinetix Customer',
+            planName: 'Paid Plan', // Can be dynamically mapped based on product_cart if needed
+            amount: 0, // Optionally extract the payment amount from the payment intent
+            orderId: session_id,
           }),
         });
       } catch (err) {
@@ -58,11 +44,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      status: data.order_status,
+      status: sessionData.payment_status,
       isPaid,
     });
   } catch (error: any) {
-    console.error('[Cashfree Verify] Error:', error);
+    console.error('[DodoVerify] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
